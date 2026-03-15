@@ -1,10 +1,12 @@
 const fs = require("fs");
 const path = require("path");
+const { timers } = require("./startevent");
 
 const statePath = path.join(__dirname, "../data/eventState.json");
 
 module.exports = {
 name: "stopevent",
+
 
 execute(message) {
 
@@ -20,6 +22,11 @@ execute(message) {
         return message.reply("⚠️ No event is currently running.");
     }
 
+    // Clear running timers
+    timers.forEach(timer => clearTimeout(timer));
+    timers.length = 0;
+
+    // Reset event state
     state.running = false;
     state.mode = null;
     state.endTime = null;
@@ -29,5 +36,6 @@ execute(message) {
     message.reply("🛑 Event stopped successfully.");
 
 }
+
 
 };

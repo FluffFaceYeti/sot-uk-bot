@@ -51,3 +51,5 @@ module.exports = {
 
     }
 };
+
+module.exports.timers = timers;
