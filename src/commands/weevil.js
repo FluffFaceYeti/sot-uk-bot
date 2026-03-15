@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const permPath = path.join(__dirname, "../data/weevilPermissions.json");
+const blacklistPath = path.join(__dirname, "../data/weevilBlacklist.json");
 
 module.exports = {
 name: "weevil",
@@ -10,6 +11,21 @@ name: "weevil",
 async execute(message) {
 
 
+// LOAD BLACKLIST
+let blacklist = { blocked: {} };
+
+try {
+    blacklist = JSON.parse(fs.readFileSync(blacklistPath));
+} catch {}
+
+// CHECK IF USER IS BLOCKED
+const blockedMessage = blacklist.blocked[message.author.id];
+
+if (blockedMessage) {
+    return message.reply(blockedMessage);
+}
+
+// LOAD PERMISSIONS
 let perms = { users: [], roles: [] };
 
 try {
