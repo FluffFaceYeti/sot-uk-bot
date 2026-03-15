@@ -1,3 +1,5 @@
+const { timers } = require("../services/eventAudio");
+
 module.exports = {
     name: "stopevent",
 
