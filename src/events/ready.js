@@ -8,7 +8,7 @@ module.exports = {
         client.user.setPresence({
             activities: [
                 {
-                    name: "Stealing your booty and taking it to Golden Sands Outpost",
+                    name: "🏴‍☠️ Stealing your booty 🏴‍☠️",
                     type: 0 // Playing
                 }
             ],
