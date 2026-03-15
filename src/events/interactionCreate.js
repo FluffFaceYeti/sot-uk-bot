@@ -1,118 +1,175 @@
 const fs = require("fs");
 const path = require("path");
-const { ChannelSelectMenuBuilder, ActionRowBuilder } = require("discord.js");
+const { ChannelSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");
 
 const eventPath = path.join(__dirname, "../data/eventChannels.json");
 const twitchPath = path.join(__dirname, "../data/twitchConfig.json");
+const prefixPath = path.join(__dirname, "../data/prefixes.json");
 
 module.exports = {
 name: "interactionCreate",
 
-
 async execute(interaction, client) {
 
-    // BUTTON HANDLER (SETUP DASHBOARD)
-    if (interaction.isButton()) {
 
-        // EVENT CHANNEL SETUP
-        if (interaction.customId === "setup_event_channels") {
+// BUTTON HANDLER (SETUP DASHBOARD)
+if (interaction.isButton()) {
 
-            const menu = new ChannelSelectMenuBuilder()
-                .setCustomId("event_channel_select")
-                .setPlaceholder("Select event voice channels")
-                .setMinValues(1)
-                .setMaxValues(10)
-                .addChannelTypes(2); // voice channels
+    // EVENT CHANNEL SETUP
+    if (interaction.customId === "setup_event_channels") {
 
-            const row = new ActionRowBuilder().addComponents(menu);
+        const menu = new ChannelSelectMenuBuilder()
+            .setCustomId("event_channel_select")
+            .setPlaceholder("Select event voice channels")
+            .setMinValues(1)
+            .setMaxValues(10)
+            .addChannelTypes(2);
 
-            return interaction.reply({
-                content: "Select the voice channels used for event alerts:",
-                components: [row],
-                flags: 64
-            });
-        }
+        const row = new ActionRowBuilder().addComponents(menu);
 
-        // TWITCH CHANNEL SETUP
-        if (interaction.customId === "setup_twitch_channel") {
-
-            const menu = new ChannelSelectMenuBuilder()
-                .setCustomId("twitch_channel_select")
-                .setPlaceholder("Select Twitch alert channel")
-                .setMinValues(1)
-                .setMaxValues(1)
-                .addChannelTypes(0); // text channels
-
-            const row = new ActionRowBuilder().addComponents(menu);
-
-            return interaction.reply({
-                content: "Select the channel where Twitch alerts should be sent:",
-                components: [row],
-                flags: 64
-            });
-        }
+        return interaction.reply({
+            content: "Select the voice channels used for event alerts:",
+            components: [row],
+            flags: 64
+        });
     }
 
-    // CHANNEL SELECT MENUS
-    if (interaction.isChannelSelectMenu()) {
+    // TWITCH CHANNEL SETUP
+    if (interaction.customId === "setup_twitch_channel") {
 
-        // EVENT VOICE CHANNELS
-        if (interaction.customId === "event_channel_select") {
+        const menu = new ChannelSelectMenuBuilder()
+            .setCustomId("twitch_channel_select")
+            .setPlaceholder("Select Twitch alert channel")
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addChannelTypes(0);
 
-            const selectedChannels = interaction.values;
+        const row = new ActionRowBuilder().addComponents(menu);
 
-            const data = { channels: selectedChannels };
-
-            fs.writeFileSync(eventPath, JSON.stringify(data, null, 2));
-
-            return interaction.reply({
-                content: "✅ Event voice channels saved!",
-                flags: 64
-            });
-        }
-
-        // TWITCH ALERT CHANNEL
-        if (interaction.customId === "twitch_channel_select") {
-
-            let config = {};
-
-            try {
-                config = JSON.parse(fs.readFileSync(twitchPath));
-            } catch {}
-
-            const channelId = interaction.values[0];
-
-            config[interaction.guild.id] = channelId;
-
-            fs.writeFileSync(twitchPath, JSON.stringify(config, null, 2));
-
-            return interaction.reply({
-                content: "📡 Twitch alert channel saved!",
-                flags: 64
-            });
-        }
+        return interaction.reply({
+            content: "Select the channel where Twitch alerts should be sent:",
+            components: [row],
+            flags: 64
+        });
     }
 
-    // SLASH COMMANDS
-    if (!interaction.isChatInputCommand()) return;
+    // PREFIX SETUP
+    if (interaction.customId === "setup_prefix") {
 
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
+        const modal = new ModalBuilder()
+            .setCustomId("prefix_modal")
+            .setTitle("Change Bot Prefix");
 
-    try {
+        const prefixInput = new TextInputBuilder()
+            .setCustomId("prefix_input")
+            .setLabel("Enter the new prefix")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+            .setMaxLength(3);
 
-        await command.execute(interaction, client);
+        const row = new ActionRowBuilder().addComponents(prefixInput);
+        modal.addComponents(row);
 
-    } catch (error) {
+        return interaction.showModal(modal);
+    }
 
-        console.error(error);
+    // RESET CONFIG
+    if (interaction.customId === "reset_config") {
 
-        await interaction.reply({
-            content: "There was an error executing this command.",
+        fs.writeFileSync(eventPath, JSON.stringify({ channels: [] }, null, 2));
+        fs.writeFileSync(twitchPath, JSON.stringify({}, null, 2));
+        fs.writeFileSync(prefixPath, JSON.stringify({}, null, 2));
+
+        return interaction.reply({
+            content: "⚠️ Bot configuration has been reset.",
             flags: 64
         });
     }
 }
 
+// CHANNEL SELECT MENUS
+if (interaction.isChannelSelectMenu()) {
 
+    // EVENT VOICE CHANNELS
+    if (interaction.customId === "event_channel_select") {
+
+        const selectedChannels = interaction.values;
+        const data = { channels: selectedChannels };
+
+        fs.writeFileSync(eventPath, JSON.stringify(data, null, 2));
+
+        return interaction.reply({
+            content: "✅ Event voice channels saved!",
+            flags: 64
+        });
+    }
+
+    // TWITCH ALERT CHANNEL
+    if (interaction.customId === "twitch_channel_select") {
+
+        let config = {};
+
+        try {
+            config = JSON.parse(fs.readFileSync(twitchPath));
+        } catch {}
+
+        const channelId = interaction.values[0];
+
+        config[interaction.guild.id] = channelId;
+
+        fs.writeFileSync(twitchPath, JSON.stringify(config, null, 2));
+
+        return interaction.reply({
+            content: "📡 Twitch alert channel saved!",
+            flags: 64
+        });
+    }
+}
+
+// PREFIX MODAL SUBMIT
+if (interaction.isModalSubmit()) {
+
+    if (interaction.customId === "prefix_modal") {
+
+        const newPrefix = interaction.fields.getTextInputValue("prefix_input");
+
+        let prefixes = {};
+
+        try {
+            prefixes = JSON.parse(fs.readFileSync(prefixPath));
+        } catch {}
+
+        prefixes[interaction.guild.id] = newPrefix;
+
+        fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
+
+        return interaction.reply({
+            content: `✅ Prefix updated to \`${newPrefix}\``,
+            flags: 64
+        });
+    }
+}
+
+// SLASH COMMANDS
+if (!interaction.isChatInputCommand()) return;
+
+const command = client.commands.get(interaction.commandName);
+if (!command) return;
+
+try {
+
+    await command.execute(interaction, client);
+
+} catch (error) {
+
+    console.error(error);
+
+    await interaction.reply({
+        content: "There was an error executing this command.",
+        flags: 64
+    });
+}
+
+
+}
 };

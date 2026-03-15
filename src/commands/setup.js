@@ -1,4 +1,10 @@
+const fs = require("fs");
+const path = require("path");
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+
+const eventPath = path.join(__dirname, "../data/eventChannels.json");
+const twitchPath = path.join(__dirname, "../data/twitchConfig.json");
+const prefixPath = path.join(__dirname, "../data/prefixes.json");
 
 module.exports = {
 name: "setup",
@@ -10,21 +16,51 @@ execute(message) {
         return message.reply("You must be an administrator to use setup.");
     }
 
+    let eventChannels = [];
+    let twitchChannel = "Not set";
+    let prefix = "!";
+
+    try {
+        const data = JSON.parse(fs.readFileSync(eventPath));
+        eventChannels = data.channels || [];
+    } catch {}
+
+    try {
+        const config = JSON.parse(fs.readFileSync(twitchPath));
+        const channelId = config[message.guild.id];
+
+        if (channelId) {
+            const channel = message.guild.channels.cache.get(channelId);
+            if (channel) twitchChannel = `#${channel.name}`;
+        }
+    } catch {}
+
+    try {
+        const prefixes = JSON.parse(fs.readFileSync(prefixPath));
+        prefix = prefixes[message.guild.id] || "!";
+    } catch {}
+
+    const channelNames = eventChannels
+        .map(id => message.guild.channels.cache.get(id))
+        .filter(ch => ch)
+        .map(ch => `• ${ch.name}`)
+        .join("\n") || "None configured";
+
     const row = new ActionRowBuilder().addComponents(
 
         new ButtonBuilder()
             .setCustomId("setup_event_channels")
-            .setLabel("Event Voice Channels")
+            .setLabel("Change Event Channels")
             .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
             .setCustomId("setup_twitch_channel")
-            .setLabel("Twitch Alert Channel")
+            .setLabel("Change Twitch Channel")
             .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
             .setCustomId("setup_prefix")
-            .setLabel("Set Prefix")
+            .setLabel("Change Prefix")
             .setStyle(ButtonStyle.Secondary),
 
         new ButtonBuilder()
@@ -34,9 +70,25 @@ execute(message) {
     );
 
     message.reply({
-        content: "⚙️ **Bot Setup Panel**\nSelect an option below:",
-        components: [row]
-    });
+        content:
+
+
+`⚙️ **Bot Setup Panel**
+
+🔊 **Event Voice Channels**
+${channelNames}
+
+📡 **Twitch Alert Channel**
+${twitchChannel}
+
+⌨️ **Prefix**
+${prefix}
+
+──────────────
+Select an option below to update settings.`,
+components: [row]
+});
+
 
 }
 
