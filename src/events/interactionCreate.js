@@ -1,17 +1,17 @@
 const fs = require("fs");
 const path = require("path");
 
-const dataPath = path.join(__dirname, "../data/alertChannels.json");
+const dataPath = path.join(__dirname, "../data/eventChannels.json");
 
 module.exports = {
     name: "interactionCreate",
 
     async execute(interaction, client) {
 
-        // HANDLE DROPDOWN CHANNEL SELECTION
+        // HANDLE EVENT CHANNEL SELECTION
         if (interaction.isChannelSelectMenu()) {
 
-            if (interaction.customId === "alert_channel_select") {
+            if (interaction.customId === "event_channel_select") {
 
                 const selectedChannels = interaction.values;
 
@@ -20,7 +20,7 @@ module.exports = {
                 fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
 
                 return interaction.reply({
-                    content: "✅ Alert channels saved successfully!",
+                    content: "✅ Event voice channels saved!",
                     ephemeral: true
                 });
             }
@@ -33,13 +33,18 @@ module.exports = {
         if (!command) return;
 
         try {
+
             await command.execute(interaction, client);
+
         } catch (error) {
+
             console.error(error);
+
             await interaction.reply({
                 content: "There was an error executing this command.",
                 ephemeral: true
             });
+
         }
     }
 };
