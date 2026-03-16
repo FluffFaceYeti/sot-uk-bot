@@ -1,105 +1,87 @@
+const path = require("path");
 const { createCanvas, loadImage, registerFont } = require("canvas");
 const { AttachmentBuilder } = require("discord.js");
 
-// Load Pirate Font
-registerFont("./src/assets/fonts/PirataOne-Regular.ttf", {
- family: "Pirata One"
+// Load Pirate Font (absolute path)
+const fontPath = path.join(__dirname, "../assets/fonts/PirataOne-Regular.ttf");
+
+registerFont(fontPath, {
+    family: "PirataOne"
 });
-
-// Automatically shrink text if too long
-function fitText(ctx, text, maxWidth, startSize) {
-
- let size = startSize;
-
- do {
-  ctx.font = `${size}px "Pirata One"`;
-  size--;
- } while (ctx.measureText(text).width > maxWidth && size > 20);
-
- return ctx.font;
-}
 
 async function drawCard(photoURL, card) {
 
- const width = 700;
- const height = 1000;
+    const width = 700;
+    const height = 1000;
 
- const canvas = createCanvas(width, height);
- const ctx = canvas.getContext("2d");
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
 
- const portrait = await loadImage(photoURL);
- const frame = await loadImage("./src/assets/cards/base-card.png");
+    const portrait = await loadImage(photoURL);
+    const frame = await loadImage(
+        path.join(__dirname, "../assets/cards/base-card.png")
+    );
 
- // Portrait (draw first)
+    // ---- Draw Portrait ----
+    ctx.save();
 
- const portraitX = 120;
- const portraitY = 130;
- const portraitW = 460;
- const portraitH = 360;
+    ctx.beginPath();
+    ctx.rect(120, 130, 460, 360);
+    ctx.clip();
 
- const size = Math.min(portrait.width, portrait.height);
+    ctx.drawImage(portrait, 120, 130, 460, 360);
 
- ctx.drawImage(
-  portrait,
-  (portrait.width - size) / 2,
-  (portrait.height - size) / 2,
-  size,
-  size,
-  portraitX,
-  portraitY,
-  portraitW,
-  portraitH
- );
+    ctx.restore();
 
- // Card frame on top
- ctx.drawImage(frame, 0, 0, width, height);
+    // ---- Draw Frame on top ----
+    ctx.drawImage(frame, 0, 0, width, height);
 
- ctx.fillStyle = "#2a1a0a";
- ctx.textAlign = "center";
+    ctx.fillStyle = "#2a1a0a";
+    ctx.textAlign = "center";
 
- // Pirate Name
- ctx.font = fitText(ctx, card.name, 500, 52);
- ctx.fillText(card.name, 350, 90);
+    // ---- Pirate Name ----
+    ctx.font = '52px "PirataOne"';
+    ctx.fillText(card.name, 350, 95);
 
- // Pirate Title
- ctx.font = fitText(ctx, card.title, 420, 36);
- ctx.fillText(card.title, 350, 520);
+    // ---- Pirate Title ----
+    ctx.font = '36px "PirataOne"';
+    ctx.fillText(card.title, 350, 515);
 
- // Stats
- ctx.textAlign = "left";
- ctx.font = `32px "Pirata One"`;
+    // ---- Stats ----
+    ctx.textAlign = "left";
+    ctx.font = '32px "PirataOne"';
 
- ctx.fillText(card.stats.sword, 260, 640);
- ctx.fillText(card.stats.cannon, 260, 690);
- ctx.fillText(card.stats.navigation, 260, 740);
- ctx.fillText(card.stats.rum, 260, 790);
- ctx.fillText(card.stats.chaos, 260, 840);
+    ctx.fillText(card.stats.sword, 300, 640);
+    ctx.fillText(card.stats.cannon, 300, 690);
+    ctx.fillText(card.stats.navigation, 300, 740);
+    ctx.fillText(card.stats.rum, 300, 790);
+    ctx.fillText(card.stats.chaos, 300, 840);
 
- // Rarity Colors
- const rarityColors = {
-  Common: "#c9c9c9",
-  Rare: "#3aa0ff",
-  Epic: "#b84cff",
-  Legendary: "#ffd700"
- };
+    // ---- Rarity Colors ----
+    const rarityColors = {
+        Common: "#c9c9c9",
+        Rare: "#3aa0ff",
+        Epic: "#b84cff",
+        Legendary: "#ffd700"
+    };
 
- ctx.fillStyle = rarityColors[card.rarity] || "#ffffff";
+    ctx.fillStyle = rarityColors[card.rarity] || "#ffffff";
 
- ctx.textAlign = "center";
- ctx.font = `46px "Pirata One"`;
+    ctx.textAlign = "center";
+    ctx.font = '46px "PirataOne"';
 
- ctx.fillText(card.rarity.toUpperCase(), 350, 930);
+    ctx.fillText(card.rarity.toUpperCase(), 350, 930);
 
- // Card number
- ctx.fillStyle = "#2a1a0a";
- ctx.font = `22px "Pirata One"`;
- ctx.textAlign = "right";
+    // ---- Card Number ----
+    ctx.fillStyle = "#2a1a0a";
+    ctx.font = '22px "PirataOne"';
+    ctx.textAlign = "right";
 
- ctx.fillText(`#${card.cardNumber}/500`, 660, 40);
+    ctx.fillText(`#${card.cardNumber}/500`, 660, 40);
 
- return new AttachmentBuilder(canvas.toBuffer(), {
-  name: "pirate-card.png"
- });
+    return new AttachmentBuilder(canvas.toBuffer(), {
+        name: "pirate-card.png"
+    });
 }
 
 module.exports = drawCard;
