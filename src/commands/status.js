@@ -8,7 +8,7 @@ module.exports = {
  async execute(message, client, args) {
 
   const allowedUsers = [
-   "406942041885638677"
+   "118142105620054016"
   ];
 
   if (!allowedUsers.includes(message.author.id)) return;
@@ -34,6 +34,8 @@ module.exports = {
    fs.writeFileSync(file, JSON.stringify({
     text: statusText
    }, null, 2));
+
+   console.log("Status updated to:", statusText);
 
    message.react("✅");
 
