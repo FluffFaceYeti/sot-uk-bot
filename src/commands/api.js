@@ -1,6 +1,5 @@
-const fetch = require("node-fetch");
+const https = require("https");
 
-// List of API commands
 const apiCommands = [
  "pirate"
 ];
@@ -8,39 +7,42 @@ const apiCommands = [
 module.exports = {
 
  name: "api",
-
  aliases: apiCommands,
 
- async execute(message) {
+ async execute(message, client, args) {
+
+  const prefix = "!"; // change if your prefix changes
 
   const commandUsed = message.content
+   .slice(prefix.length)
    .split(" ")[0]
-   .replace("!", "")
    .toLowerCase();
 
   if (!apiCommands.includes(commandUsed)) return;
 
   const username = message.author.username;
 
-  try {
+  const url =
+   `https://flufffaceyeti.twitch.socdesigns.com/?sender=${username}&type=${commandUsed}`;
 
-   const res = await fetch(
-    `https://flufffaceyeti.twitch.socdesigns.com/?sender=${username}&type=${commandUsed}`
-   );
+  https.get(url, (res) => {
 
-   const text = await res.text();
+   let data = "";
 
-   message.channel.send(
-    `@${username} ${text}`
-   );
+   res.on("data", chunk => {
+    data += chunk;
+   });
 
-  } catch (error) {
+   res.on("end", () => {
+    message.channel.send(`@${username} ${data}`);
+   });
 
-   console.error(error);
+  }).on("error", (err) => {
 
-   message.reply("The pirate oracle is currently lost at sea.");
+   console.error(err);
+   message.reply("The pirate oracle is lost at sea.");
 
-  }
+  });
 
  }
 
