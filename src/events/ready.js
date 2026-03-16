@@ -1,4 +1,6 @@
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 let twitchToken = null;
 let isLive = false;
@@ -72,13 +74,25 @@ module.exports = {
 
         console.log(`SoT_UK Bot is online as ${client.user.tag}`);
 
+        const statusFile = path.join(__dirname, "..", "data", "status.json");
+
+        let statusText = "🏴‍☠️ Stealing your booty 🏴‍☠️";
+
+        if (fs.existsSync(statusFile)) {
+
+            const statusData = JSON.parse(fs.readFileSync(statusFile));
+
+            if (statusData.text) {
+                statusText = statusData.text;
+            }
+
+        }
+
         client.user.setPresence({
-            activities: [
-                {
-                    name: "🏴‍☠️ Stealing your booty 🏴‍☠️",
-                    type: 0
-                }
-            ],
+            activities: [{
+                name: statusText,
+                type: 0
+            }],
             status: "online"
         });
 
