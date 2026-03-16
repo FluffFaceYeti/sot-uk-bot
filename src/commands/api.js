@@ -34,7 +34,7 @@ module.exports = {
    });
 
    res.on("end", () => {
-    message.channel.send(`@${username} ${data}`);
+    message.channel.send(data.trim());
    });
 
   }).on("error", (err) => {
