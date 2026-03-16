@@ -44,11 +44,13 @@ async function checkTwitch(client) {
 
     const stream = response.data.data[0];
 
+    const statusFile = path.join(__dirname, "..", "data", "status.json");
+
     if (stream && !isLive) {
 
         isLive = true;
 
-        const channel = client.channels.cache.get("YOUR_DISCORD_CHANNEL_ID");
+        const channel = client.channels.cache.get("1176953767623675954");
 
         if (channel) {
 
@@ -58,10 +60,42 @@ async function checkTwitch(client) {
 
         }
 
+        // Change bot status to LIVE
+        client.user.setPresence({
+            activities: [{
+                name: `LIVE: ${stream.game_name}`,
+                type: 0
+            }],
+            status: "online"
+        });
+
     }
 
-    if (!stream) {
+    if (!stream && isLive) {
+
         isLive = false;
+
+        let statusText = "🏴‍☠️ Stealing your booty 🏴‍☠️";
+
+        if (fs.existsSync(statusFile)) {
+
+            const saved = JSON.parse(fs.readFileSync(statusFile));
+
+            if (saved.text) {
+                statusText = saved.text;
+            }
+
+        }
+
+        // Restore saved status
+        client.user.setPresence({
+            activities: [{
+                name: statusText,
+                type: 0
+            }],
+            status: "online"
+        });
+
     }
 
 }
@@ -96,7 +130,7 @@ module.exports = {
             status: "online"
         });
 
-        // check Twitch every 90 seconds
+        // Check Twitch every 90 seconds
         setInterval(() => {
             checkTwitch(client);
         }, 90000);

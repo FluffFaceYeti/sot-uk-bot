@@ -29,18 +29,18 @@ module.exports = {
     status: "online"
    });
 
-   const filePath = path.join(__dirname, "..", "data", "status.json");
+   const file = path.join(__dirname, "..", "data", "status.json");
 
-   fs.writeFileSync(filePath, JSON.stringify({
+   fs.writeFileSync(file, JSON.stringify({
     text: statusText
    }, null, 2));
 
    message.react("✅");
 
-  } catch (error) {
+  } catch (err) {
 
-   console.error(error);
-   message.reply("Failed to update bot status.");
+   console.error(err);
+   message.reply("Failed to update status.");
 
   }
 
