@@ -29,7 +29,8 @@ async function playEventAudio(message, audioFile) {
 
   const channels = [...new Set(data.channels)];
 
-  message.channel.send(`🔔 Playing event alert: **${audioFile}**`);
+  // store the messages
+  const startMessage = await message.channel.send(`🔔 Playing event alert: **${audioFile}**`);
 
   await sleep(3000);
 
@@ -57,7 +58,6 @@ async function playEventAudio(message, audioFile) {
       );
 
       connection.subscribe(player);
-
       player.play(resource);
 
       await new Promise(resolve => {
@@ -69,14 +69,22 @@ async function playEventAudio(message, audioFile) {
       await sleep(500);
 
     } catch (err) {
-
       console.error("Voice error:", err);
-
     }
 
   }
 
-  message.channel.send("🔔 Alert finished!");
+  const endMessage = await message.channel.send("🔔 Alert finished!");
+
+  // cleanup after short delay
+  await sleep(3000);
+
+  try {
+    await startMessage.delete();
+    await endMessage.delete();
+  } catch (err) {
+    console.error("Failed to delete messages:", err);
+  }
 
 }
 
