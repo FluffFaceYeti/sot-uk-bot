@@ -50,7 +50,7 @@ async function checkStream(client) {
         const fs = require("fs");
         const path = require("path");
 
-        const configPath = path.join(__dirname, "../data/twitchConfig.json");
+        const configPath = path.join(__dirname, "../../userdata/twitchConfig.json");
         const config = JSON.parse(fs.readFileSync(configPath));
 
         const channelId = config[client.guilds.cache.first().id];

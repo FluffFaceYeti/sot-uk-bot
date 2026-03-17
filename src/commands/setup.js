@@ -2,9 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
-const eventPath = path.join(__dirname, "../data/eventChannels.json");
-const twitchPath = path.join(__dirname, "../data/twitchConfig.json");
-const prefixPath = path.join(__dirname, "../data/prefixes.json");
+const eventPath = path.join(__dirname, "../../userdata/eventChannels.json");
+const twitchPath = path.join(__dirname, "../../userdata/twitchConfig.json");
+const prefixPath = path.join(__dirname, "../../userdata/prefixes.json");
 
 module.exports = {
 name: "setup",

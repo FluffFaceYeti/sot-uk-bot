@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const statePath = path.join(__dirname, "../data/eventState.json");
-const channelsPath = path.join(__dirname, "../data/eventChannels.json");
+const statePath = path.join(__dirname, "../../userdata/eventState.json");
+const channelsPath = path.join(__dirname, "../../userdata/eventChannels.json");
 
 module.exports = {
 name: "eventstatus",

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const statePath = path.join(__dirname, "../data/eventState.json");
+const statePath = path.join(__dirname, "../../userdata/eventState.json");
 
 let timers = [];
 

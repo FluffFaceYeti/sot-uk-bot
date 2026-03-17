@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const permPath = path.join(__dirname, "../data/weevilPermissions.json");
+const permPath = path.join(__dirname, "../../userdata/weevilPermissions.json");
 
 module.exports = {
 name: "removeweevil",

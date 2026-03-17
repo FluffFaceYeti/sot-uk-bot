@@ -7,7 +7,7 @@ const {
     AudioPlayerStatus
 } = require("@discordjs/voice");
 
-const dataPath = path.join(__dirname, "../data/alertChannels.json");
+const dataPath = path.join(__dirname, "../../userdata/alertChannels.json");
 
 module.exports = {
     name: "startalert",

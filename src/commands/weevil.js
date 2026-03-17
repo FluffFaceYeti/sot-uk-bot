@@ -2,8 +2,8 @@ const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSta
 const fs = require("fs");
 const path = require("path");
 
-const permPath = path.join(__dirname, "../data/weevilPermissions.json");
-const blacklistPath = path.join(__dirname, "../data/weevilBlacklist.json");
+const permPath = path.join(__dirname, "../../userdata/weevilPermissions.json");
+const blacklistPath = path.join(__dirname, "../../userdata/weevilBlacklist.json");
 
 module.exports = {
 name: "weevil",
