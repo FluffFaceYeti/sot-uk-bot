@@ -10,7 +10,8 @@ module.exports = {
   const allowedUsers = [
    "406942041885638677",
    "406733695135776769",
-   "1028972897328439357"
+   "1028972897328439357",
+   "118142105620054016"
   ];
 
   if (!allowedUsers.includes(message.author.id)) return;
