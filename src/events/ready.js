@@ -113,7 +113,7 @@ module.exports = {
 
     execute(client) {
 
-        console.log(`FFY Bot is online as ${client.user.tag}`);
+        console.log(`SoT_UK Bot is online as ${client.user.tag}`);
 
         let statusText = "🏴‍☠️ Stealing your booty 🏴‍☠️";
 
