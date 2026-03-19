@@ -7,7 +7,7 @@ const { checkBirthdays } = require("../utils/birthdayCheck");
 
 let twitchToken = null;
 let isLive = false;
-
+const { checkStream } = require("../services/twitchMonitor");
 const statusFile = path.join(__dirname, "../../userdata/status.json");
 const configPath = path.join(__dirname, "../../userdata/twitchConfig.json");
 
@@ -129,10 +129,11 @@ module.exports = {
         });
 
         // 🔴 Twitch presence checker
-        checkTwitch(client);
+        // 🔴 Twitch alert system (embed)
+        checkStream(client);
 
         setInterval(() => {
-            checkTwitch(client);
+        checkStream(client);
         }, 90000);
 
         // 🎂 Birthday system (FIXED)
