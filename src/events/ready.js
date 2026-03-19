@@ -7,6 +7,7 @@ let isLive = false;
 
 const statusFile = path.join(__dirname, "../../userdata/status.json");
 const configPath = path.join(__dirname, "../../userdata/twitchConfig.json");
+const { checkBirthdays } = require("../../utils/birthdayCheck");
 
 const STREAMER = "sot_uk";
 
@@ -61,16 +62,8 @@ async function checkTwitch(client) {
 
         isLive = true;
 
-        for (const guild of client.guilds.cache.values()) {
-
-            const channelId = config[guild.id];
-            if (!channelId) continue;
-
-            const channel = guild.channels.cache.get(channelId);
-            if (!channel) continue;
-
-            channel.send(`🔴 **${STREAMER} is LIVE!**\nhttps://www.twitch.tv/${STREAMER}`);
-        }
+        // ❌ REMOVED OLD MESSAGE SENDING BLOCK
+        // Twitch alerts are now handled by twitchMonitor.js
 
         client.user.setPresence({
             activities: [{
@@ -134,10 +127,16 @@ module.exports = {
             status: "online"
         });
 
+        // 🔴 Twitch presence checker
         checkTwitch(client);
 
         setInterval(() => {
             checkTwitch(client);
         }, 90000);
+
+        // 🎂 RUN EVERY MINUTE
+        setInterval(() => {
+            checkBirthdays(client);
+        }, 60 * 1000);
     }
 };
