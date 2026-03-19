@@ -62,7 +62,7 @@ async function checkStream(client) {
 
         const streamer = process.env.TWITCH_CHANNEL;
 
-        // 🔥 Get streamer profile info
+        // 🔥 Get streamer profile
         const userResponse = await axios.get(
             "https://api.twitch.tv/helix/users",
             {
@@ -95,34 +95,40 @@ async function checkStream(client) {
                 continue;
             }
 
-            // ✨ NICE EMBED
+            // ✨ STREAMCORD STYLE EMBED
             const embed = new EmbedBuilder()
                 .setColor(0x9146FF)
                 .setAuthor({
-                    name: `${streamer} is LIVE on Twitch! 🔴`,
-                    iconURL: user.profile_image_url,
-                    url: `https://twitch.tv/${streamer}`
+                    name: `${streamer} is now live on Twitch!`,
+                    iconURL: user.profile_image_url
                 })
-                .setTitle(`🎥 ${stream.title}`)
+                .setTitle(stream.title)
                 .setURL(`https://twitch.tv/${streamer}`)
-                .setDescription(
-                    `🏴‍☠️ Sailing the seas in **${stream.game_name || "Unknown Game"}**\n\n👀 **${stream.viewer_count} pirates watching!**`
+                .addFields(
+                    {
+                        name: "Game",
+                        value: stream.game_name || "Unknown",
+                        inline: true
+                    },
+                    {
+                        name: "Viewers",
+                        value: stream.viewer_count.toString(),
+                        inline: true
+                    }
                 )
                 .setImage(
                     stream.thumbnail_url
                         .replace("{width}", "1280")
                         .replace("{height}", "720") + `?t=${Date.now()}`
                 )
-                .setThumbnail(user.profile_image_url)
                 .setFooter({
-                    text: "SoT_UK Live Alert",
-                    iconURL: user.profile_image_url
+                    text: "twitch.tv"
                 })
                 .setTimestamp();
 
             const button = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setLabel("🏴‍☠️ Watch Stream")
+                    .setLabel("Watch Stream")
                     .setStyle(ButtonStyle.Link)
                     .setURL(`https://twitch.tv/${streamer}`)
             );
@@ -130,7 +136,7 @@ async function checkStream(client) {
             console.log("Sending Twitch alert to guild:", guild.id);
 
             await channel.send({
-                content: `🔴 **${streamer} just went LIVE!**\n🏴‍☠️ Join the crew and set sail!`,
+                content: `@everyone ${streamer} is Now Live! Come Check it Out and have fun with the admin team`,
                 embeds: [embed],
                 components: [button]
             }).catch(err => {
@@ -139,7 +145,7 @@ async function checkStream(client) {
         }
     }
 
-    // ⚫ STREAM OFFLINE
+    // ⚫ RESET WHEN OFFLINE
     if (!stream) {
         live = false;
     }
