@@ -133,7 +133,10 @@ module.exports = {
                 });
             }
 
-            if (interaction.customId === "birthday_day") {
+            if (
+            interaction.customId === "birthday_day_1" ||
+            interaction.customId === "birthday_day_2"
+            ) {
 
                 if (!temp[userId]) {
                     return interaction.reply({
@@ -158,7 +161,7 @@ module.exports = {
 
                 return interaction.reply({
                     content: `🎂 Birthday saved: **${day}/${month}**`,
-                    ephemeral: true
+                    flags: 64
                 });
             }
         }
