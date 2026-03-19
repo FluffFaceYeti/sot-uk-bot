@@ -2,12 +2,14 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
+// 🎂 Birthday system
+const { checkBirthdays } = require("../../utils/birthdayCheck");
+
 let twitchToken = null;
 let isLive = false;
 
 const statusFile = path.join(__dirname, "../../userdata/status.json");
 const configPath = path.join(__dirname, "../../userdata/twitchConfig.json");
-const { checkBirthdays } = require("../../utils/birthdayCheck");
 
 const STREAMER = "sot_uk";
 
@@ -62,8 +64,7 @@ async function checkTwitch(client) {
 
         isLive = true;
 
-        // ❌ REMOVED OLD MESSAGE SENDING BLOCK
-        // Twitch alerts are now handled by twitchMonitor.js
+        // ❌ No message sending here anymore (handled by twitchMonitor.js)
 
         client.user.setPresence({
             activities: [{
@@ -134,7 +135,9 @@ module.exports = {
             checkTwitch(client);
         }, 90000);
 
-        // 🎂 RUN EVERY MINUTE
+        // 🎂 Birthday system (FIXED)
+        checkBirthdays(client); // run immediately
+
         setInterval(() => {
             checkBirthdays(client);
         }, 60 * 1000);
