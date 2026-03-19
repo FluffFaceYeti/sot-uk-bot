@@ -1,12 +1,4 @@
-const fs = require("fs");
-const path = require("path");
-
-const filePath = path.join(__dirname, "../../userdata/birthdayChannels.json");
-
-// ensure file exists
-if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify({}, null, 2));
-}
+const { ChannelSelectMenuBuilder, ActionRowBuilder } = require("discord.js");
 
 module.exports = {
     name: "birthdaychannel",
@@ -14,23 +6,21 @@ module.exports = {
     async execute(message) {
 
         if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ You need admin to set the birthday channel.");
+            return message.reply("❌ You need admin.");
         }
 
-        const channel = message.mentions.channels.first();
-        if (!channel) {
-            return message.reply("❌ Mention a channel.\nExample: `!birthdaychannel #general`");
-        }
+        const menu = new ChannelSelectMenuBuilder()
+            .setCustomId("birthday_channel_select")
+            .setPlaceholder("Select birthday channel")
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addChannelTypes(0); // text channels
 
-        let data = {};
-        try {
-            data = JSON.parse(fs.readFileSync(filePath));
-        } catch {}
+        const row = new ActionRowBuilder().addComponents(menu);
 
-        data[message.guild.id] = channel.id;
-
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-
-        message.reply(`🎂 Birthday messages will now be sent in ${channel}`);
+        message.reply({
+            content: "🎂 Select the birthday channel:",
+            components: [row]
+        });
     }
 };

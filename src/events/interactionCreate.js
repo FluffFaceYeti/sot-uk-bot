@@ -2,180 +2,205 @@ const fs = require("fs");
 const path = require("path");
 const { ChannelSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");
 
-// ✅ NEW BASE PATH
+// ✅ BASE PATH
 const basePath = path.join(__dirname, "../../userdata");
 
-// ✅ FILE PATHS
+// FILES
 const eventPath = path.join(basePath, "eventChannels.json");
 const twitchPath = path.join(basePath, "twitchConfig.json");
 const prefixPath = path.join(basePath, "prefixes.json");
+const birthdayPath = path.join(basePath, "birthdays.json");
+const birthdayChannelPath = path.join(basePath, "birthdayChannels.json");
 
-// ✅ ENSURE FOLDER EXISTS
+// temp storage (move OUTSIDE function so it persists)
+const temp = {};
+
+// ensure folder exists
 if (!fs.existsSync(basePath)) {
     fs.mkdirSync(basePath, { recursive: true });
 }
 
 module.exports = {
-name: "interactionCreate",
+    name: "interactionCreate",
 
-async execute(interaction, client) {
+    async execute(interaction, client) {
 
+        // =========================
+        // 🎯 BUTTONS
+        // =========================
+        if (interaction.isButton()) {
 
-// BUTTON HANDLER
-if (interaction.isButton()) {
+            if (interaction.customId === "setup_event_channels") {
 
-    if (interaction.customId === "setup_event_channels") {
+                const menu = new ChannelSelectMenuBuilder()
+                    .setCustomId("event_channel_select")
+                    .setPlaceholder("Select event voice channels")
+                    .setMinValues(1)
+                    .setMaxValues(10)
+                    .addChannelTypes(2);
 
-        const menu = new ChannelSelectMenuBuilder()
-            .setCustomId("event_channel_select")
-            .setPlaceholder("Select event voice channels")
-            .setMinValues(1)
-            .setMaxValues(10)
-            .addChannelTypes(2);
+                return interaction.reply({
+                    content: "Select event voice channels:",
+                    components: [new ActionRowBuilder().addComponents(menu)],
+                    ephemeral: true
+                });
+            }
 
-        const row = new ActionRowBuilder().addComponents(menu);
+            if (interaction.customId === "setup_twitch_channel") {
 
-        return interaction.reply({
-            content: "Select the voice channels used for event alerts:",
-            components: [row],
-            flags: 64
-        });
-    }
+                const menu = new ChannelSelectMenuBuilder()
+                    .setCustomId("twitch_channel_select")
+                    .setPlaceholder("Select Twitch alert channel")
+                    .addChannelTypes(0);
 
-    if (interaction.customId === "setup_twitch_channel") {
+                return interaction.reply({
+                    content: "Select Twitch channel:",
+                    components: [new ActionRowBuilder().addComponents(menu)],
+                    ephemeral: true
+                });
+            }
 
-        const menu = new ChannelSelectMenuBuilder()
-            .setCustomId("twitch_channel_select")
-            .setPlaceholder("Select Twitch alert channel")
-            .setMinValues(1)
-            .setMaxValues(1)
-            .addChannelTypes(0);
+            if (interaction.customId === "setup_prefix") {
 
-        const row = new ActionRowBuilder().addComponents(menu);
+                const modal = new ModalBuilder()
+                    .setCustomId("prefix_modal")
+                    .setTitle("Change Prefix");
 
-        return interaction.reply({
-            content: "Select the channel where Twitch alerts should be sent:",
-            components: [row],
-            flags: 64
-        });
-    }
+                const input = new TextInputBuilder()
+                    .setCustomId("prefix_input")
+                    .setLabel("New prefix")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
 
-    if (interaction.customId === "setup_prefix") {
+                modal.addComponents(new ActionRowBuilder().addComponents(input));
 
-        const modal = new ModalBuilder()
-            .setCustomId("prefix_modal")
-            .setTitle("Change Bot Prefix");
+                return interaction.showModal(modal);
+            }
+        }
 
-        const prefixInput = new TextInputBuilder()
-            .setCustomId("prefix_input")
-            .setLabel("Enter the new prefix")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMaxLength(3);
+        // =========================
+        // 🎂 DROPDOWNS (birthday + channels)
+        // =========================
+        if (interaction.isChannelSelectMenu()) {
 
-        const row = new ActionRowBuilder().addComponents(prefixInput);
-        modal.addComponents(row);
+            if (interaction.customId === "birthday_channel_select") {
 
-        return interaction.showModal(modal);
-    }
+                let config = {};
+                try {
+                    config = JSON.parse(fs.readFileSync(birthdayChannelPath));
+                } catch {}
 
-    if (interaction.customId === "reset_config") {
+                config[interaction.guild.id] = interaction.values[0];
 
-        fs.writeFileSync(eventPath, JSON.stringify({ channels: [] }, null, 2));
-        fs.writeFileSync(twitchPath, JSON.stringify({}, null, 2));
-        fs.writeFileSync(prefixPath, JSON.stringify({}, null, 2));
+                fs.writeFileSync(birthdayChannelPath, JSON.stringify(config, null, 2));
 
-        return interaction.reply({
-            content: "⚠️ Bot configuration has been reset.",
-            flags: 64
-        });
-    }
-}
+                return interaction.reply({
+                    content: "🎂 Birthday channel saved!",
+                    ephemeral: true
+                });
+            }
 
+            if (interaction.customId === "twitch_channel_select") {
 
-// CHANNEL SELECT
-if (interaction.isChannelSelectMenu()) {
+                let config = {};
+                try {
+                    config = JSON.parse(fs.readFileSync(twitchPath));
+                } catch {}
 
-    if (interaction.customId === "event_channel_select") {
+                config[interaction.guild.id] = interaction.values[0];
 
-        const selectedChannels = interaction.values;
-        const data = { channels: selectedChannels };
+                fs.writeFileSync(twitchPath, JSON.stringify(config, null, 2));
 
-        fs.writeFileSync(eventPath, JSON.stringify(data, null, 2));
+                return interaction.reply({
+                    content: "📡 Twitch channel saved!",
+                    ephemeral: true
+                });
+            }
+        }
 
-        return interaction.reply({
-            content: "✅ Event voice channels saved!",
-            flags: 64
-        });
-    }
+        // 🎂 Birthday dropdowns
+        if (interaction.isStringSelectMenu()) {
 
-    if (interaction.customId === "twitch_channel_select") {
+            const userId = interaction.user.id;
 
-        let config = {};
+            if (interaction.customId === "birthday_month") {
+
+                temp[userId] = { month: parseInt(interaction.values[0]) };
+
+                return interaction.reply({
+                    content: "Now pick your day 🎉",
+                    ephemeral: true
+                });
+            }
+
+            if (interaction.customId === "birthday_day") {
+
+                if (!temp[userId]) {
+                    return interaction.reply({
+                        content: "Pick a month first!",
+                        ephemeral: true
+                    });
+                }
+
+                const month = temp[userId].month;
+                const day = parseInt(interaction.values[0]);
+
+                let data = {};
+                try {
+                    data = JSON.parse(fs.readFileSync(birthdayPath));
+                } catch {}
+
+                data[userId] = { day, month };
+
+                fs.writeFileSync(birthdayPath, JSON.stringify(data, null, 2));
+
+                delete temp[userId];
+
+                return interaction.reply({
+                    content: `🎂 Birthday saved: **${day}/${month}**`,
+                    ephemeral: true
+                });
+            }
+        }
+
+        // =========================
+        // 🧾 MODALS
+        // =========================
+        if (interaction.isModalSubmit()) {
+
+            if (interaction.customId === "prefix_modal") {
+
+                let prefixes = {};
+                try {
+                    prefixes = JSON.parse(fs.readFileSync(prefixPath));
+                } catch {}
+
+                const newPrefix = interaction.fields.getTextInputValue("prefix_input");
+
+                prefixes[interaction.guild.id] = newPrefix;
+
+                fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
+
+                return interaction.reply({
+                    content: `✅ Prefix updated to \`${newPrefix}\``,
+                    ephemeral: true
+                });
+            }
+        }
+
+        // =========================
+        // 💬 COMMANDS
+        // =========================
+        if (!interaction.isChatInputCommand()) return;
+
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
 
         try {
-            if (fs.existsSync(twitchPath)) {
-                config = JSON.parse(fs.readFileSync(twitchPath));
-            }
-        } catch {}
-
-        const channelId = interaction.values[0];
-
-        config[interaction.guild.id] = channelId;
-
-        fs.writeFileSync(twitchPath, JSON.stringify(config, null, 2));
-
-        return interaction.reply({
-            content: "📡 Twitch alert channel saved!",
-            flags: 64
-        });
+            await command.execute(interaction, client);
+        } catch (error) {
+            console.error(error);
+            interaction.reply({ content: "Error executing command.", ephemeral: true });
+        }
     }
-}
-
-
-// PREFIX MODAL
-if (interaction.isModalSubmit()) {
-
-    if (interaction.customId === "prefix_modal") {
-
-        let prefixes = {};
-
-        try {
-            if (fs.existsSync(prefixPath)) {
-                prefixes = JSON.parse(fs.readFileSync(prefixPath));
-            }
-        } catch {}
-
-        const newPrefix = interaction.fields.getTextInputValue("prefix_input");
-
-        prefixes[interaction.guild.id] = newPrefix;
-
-        fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
-
-        return interaction.reply({
-            content: `✅ Prefix updated to \`${newPrefix}\``,
-            flags: 64
-        });
-    }
-}
-
-
-// SLASH COMMANDS
-if (!interaction.isChatInputCommand()) return;
-
-const command = client.commands.get(interaction.commandName);
-if (!command) return;
-
-try {
-    await command.execute(interaction, client);
-} catch (error) {
-    console.error(error);
-
-    await interaction.reply({
-        content: "There was an error executing this command.",
-        flags: 64
-    });
-}
-
-}
 };
