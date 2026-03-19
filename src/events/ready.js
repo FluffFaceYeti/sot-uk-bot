@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 // 🎂 Birthday system
-const { checkBirthdays } = require("../../utils/birthdayCheck");
+const { checkBirthdays } = require("../utils/birthdayCheck");
 
 let twitchToken = null;
 let isLive = false;
