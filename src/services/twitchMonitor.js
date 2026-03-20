@@ -46,6 +46,20 @@ async function checkStream(client) {
 
         live = true;
 
+        const streamer = process.env.TWITCH_CHANNEL;
+
+        // ✅ SET STREAMING STATUS (IMPORTANT: includes URL)
+        console.log("Updating bot status to STREAMING");
+
+        client.user.setPresence({
+            activities: [{
+                name: `${streamer} on Twitch`,
+                type: 1, // STREAMING
+                url: `https://twitch.tv/${streamer}` // REQUIRED
+            }],
+            status: "online"
+        });
+
         const fs = require("fs");
         const path = require("path");
 
@@ -59,8 +73,6 @@ async function checkStream(client) {
         } catch (err) {
             console.error("Config load error:", err);
         }
-
-        const streamer = process.env.TWITCH_CHANNEL;
 
         // 🔥 Get streamer profile
         const userResponse = await axios.get(
@@ -95,7 +107,7 @@ async function checkStream(client) {
                 continue;
             }
 
-            // ✨ STREAMCORD STYLE EMBED
+            // ✨ EMBED
             const embed = new EmbedBuilder()
                 .setColor(0x9146FF)
                 .setAuthor({
@@ -145,9 +157,17 @@ async function checkStream(client) {
         }
     }
 
-    // ⚫ RESET WHEN OFFLINE
-    if (!stream) {
+    // ⚫ STREAM OFFLINE → RESET STATUS
+    if (!stream && live) {
+
+        console.log("Stream ended, resetting bot status");
+
         live = false;
+
+        client.user.setPresence({
+            activities: [],
+            status: "idle"
+        });
     }
 }
 
