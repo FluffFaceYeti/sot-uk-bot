@@ -236,21 +236,21 @@ module.exports = {
 
             if (interaction.customId === "event_channel_select") {
 
-    let config = {};
+            let config = {};
 
-    try {
-        config = JSON.parse(fs.readFileSync(eventPath));
-    } catch {}
+            try {
+            config = JSON.parse(fs.readFileSync(eventPath));
+            } catch {}
 
-    config[interaction.guild.id] = interaction.values;
+            config[interaction.guild.id] = interaction.values;
 
-    fs.writeFileSync(eventPath, JSON.stringify(config, null, 2));
+            fs.writeFileSync(eventPath, JSON.stringify(config, null, 2));
 
-    return interaction.reply({
-        content: `✅ Saved ${interaction.values.length} event channel(s)!`,
-        ephemeral: true
-    });
-}
+            return interaction.reply({
+            content: `✅ Saved ${interaction.values.length} event channel(s)!`,
+            ephemeral: true
+            });
+            }
         }
 
         // =========================

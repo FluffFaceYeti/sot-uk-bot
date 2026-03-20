@@ -27,8 +27,11 @@ async function playEventAudio(message, audioFile) {
     return message.reply("Audio file not found.");
   }
 
-  const channels = [...new Set(data.channels)];
-
+  const guildChannels = data[message.guild.id] || [];
+  const channels = [...new Set(guildChannels)];
+  if (channels.length === 0) {
+    return message.reply("❌ No event channels configured for this server.");
+  }
   // store the messages
   const startMessage = await message.channel.send(`🔔 Playing event alert: **${audioFile}**`);
 
