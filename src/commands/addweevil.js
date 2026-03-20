@@ -4,7 +4,7 @@ const path = require("path");
 const permPath = path.join(__dirname, "../../userdata/weevilPermissions.json");
 
 module.exports = {
-name: "addweevil",
+name: "addnaughty",
 
 execute(message) {
 
