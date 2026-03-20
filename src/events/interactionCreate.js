@@ -1,11 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { 
-    ChannelSelectMenuBuilder, 
-    ActionRowBuilder, 
-    ModalBuilder, 
-    TextInputBuilder, 
-    TextInputStyle 
+const {
+    ChannelSelectMenuBuilder,
+    ActionRowBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
 } = require("discord.js");
 
 // ✅ BASE PATH
@@ -21,7 +21,6 @@ const birthdayChannelPath = path.join(basePath, "birthdayChannels.json");
 // temp storage
 const temp = {};
 
-// ensure folder exists
 if (!fs.existsSync(basePath)) {
     fs.mkdirSync(basePath, { recursive: true });
 }
@@ -32,7 +31,7 @@ module.exports = {
     async execute(interaction, client) {
 
         // =========================
-        // 🔒 GLOBAL ADMIN LOCK (buttons + menus + modals)
+        // 🔒 ADMIN LOCK
         // =========================
         if (
             interaction.isButton() ||
@@ -55,7 +54,6 @@ module.exports = {
 
             const id = interaction.customId;
 
-            // 🔁 Fake message (so existing commands still work)
             const fakeMessage = {
                 guild: interaction.guild,
                 channel: interaction.channel,
@@ -67,109 +65,138 @@ module.exports = {
             const reply = (msg) =>
                 interaction.reply({ content: msg, ephemeral: true });
 
-            // =====================
-            // 🎮 EVENT PANEL BUTTONS
-            // =====================
+            try {
 
-            if (id === "event_start_manual") {
-                client.commands.get("startevent").execute(fakeMessage, client, []);
-                return reply("✅ Manual event started");
-            }
+                // =====================
+                // 🎮 EVENT PANEL
+                // =====================
 
-            if (id === "event_start_1h") {
-                client.commands.get("startevent").execute(fakeMessage, client, ["60"]);
-                return reply("⏳ 1 hour event started");
-            }
+                if (id === "event_start_manual") {
+                    client.commands.get("startevent").execute(fakeMessage, client, []);
+                    return reply("✅ Manual event started");
+                }
 
-            if (id === "event_stop") {
-                client.commands.get("stopevent").execute(fakeMessage);
-                return reply("🛑 Event stopped");
-            }
+                // 🔥 START AUTO (MODAL INPUT)
+                if (id === "event_start_auto") {
 
-            if (id === "event_go") {
-                client.commands.get("go").execute(fakeMessage);
-                return reply("▶️ GO triggered");
-            }
+                    const modal = new ModalBuilder()
+                        .setCustomId("event_hours_modal")
+                        .setTitle("Start Automatic Event");
 
-            if (id === "event_5") {
-                client.commands.get("5").execute(fakeMessage);
-                return reply("⏱️ 5 minute alert");
-            }
+                    const input = new TextInputBuilder()
+                        .setCustomId("event_hours_input")
+                        .setLabel("Duration (hours)")
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder("Example: 1, 2.5, 3")
+                        .setRequired(true);
 
-            if (id === "event_30") {
-                client.commands.get("30").execute(fakeMessage);
-                return reply("⏱️ 30 minute alert");
-            }
+                    modal.addComponents(
+                        new ActionRowBuilder().addComponents(input)
+                    );
 
-            if (id === "event_hour") {
-                client.commands.get("hour").execute(fakeMessage);
-                return reply("⏱️ 1 hour alert");
-            }
+                    return interaction.showModal(modal);
+                }
 
-            if (id === "event_status") {
-                client.commands.get("eventstatus").execute(fakeMessage);
-                return reply("📊 Status sent");
-            }
+                if (id === "event_stop") {
+                    client.commands.get("stopevent").execute(fakeMessage);
+                    return reply("🛑 Event stopped");
+                }
 
-            if (id === "event_setup") {
-                client.commands.get("setupevent").execute(fakeMessage);
-                return reply("⚙️ Setup opened");
-            }
+                if (id === "event_go") {
+                    client.commands.get("go").execute(fakeMessage);
+                    return reply("▶️ GO triggered");
+                }
 
-            // =====================
-            // ⚙️ YOUR EXISTING SETUP BUTTONS
-            // =====================
+                if (id === "event_5") {
+                    client.commands.get("5").execute(fakeMessage);
+                    return reply("⏱️ 5 minute alert");
+                }
 
-            if (id === "setup_event_channels") {
+                if (id === "event_30") {
+                    client.commands.get("30").execute(fakeMessage);
+                    return reply("⏱️ 30 minute alert");
+                }
 
-                const menu = new ChannelSelectMenuBuilder()
-                    .setCustomId("event_channel_select")
-                    .setPlaceholder("Select event voice channels")
-                    .setMinValues(1)
-                    .setMaxValues(10)
-                    .addChannelTypes(2);
+                if (id === "event_hour") {
+                    client.commands.get("hour").execute(fakeMessage);
+                    return reply("⏱️ 1 hour alert");
+                }
 
-                return interaction.reply({
-                    content: "Select event voice channels:",
-                    components: [new ActionRowBuilder().addComponents(menu)],
-                    ephemeral: true
-                });
-            }
+                if (id === "event_status") {
+                    client.commands.get("eventstatus").execute(fakeMessage);
+                    return reply("📊 Status sent");
+                }
 
-            if (id === "setup_twitch_channel") {
+                if (id === "event_setup") {
+                    client.commands.get("setupevent").execute(fakeMessage);
+                    return reply("⚙️ Setup opened");
+                }
 
-                const menu = new ChannelSelectMenuBuilder()
-                    .setCustomId("twitch_channel_select")
-                    .setPlaceholder("Select Twitch alert channel")
-                    .addChannelTypes(0);
+                // =====================
+                // ⚙️ SETUP BUTTONS
+                // =====================
 
-                return interaction.reply({
-                    content: "Select Twitch channel:",
-                    components: [new ActionRowBuilder().addComponents(menu)],
-                    ephemeral: true
-                });
-            }
+                if (id === "setup_event_channels") {
 
-            if (id === "setup_prefix") {
+                    const menu = new ChannelSelectMenuBuilder()
+                        .setCustomId("event_channel_select")
+                        .setPlaceholder("Select event voice channels")
+                        .setMinValues(1)
+                        .setMaxValues(10)
+                        .addChannelTypes(2);
 
-                const modal = new ModalBuilder()
-                    .setCustomId("prefix_modal")
-                    .setTitle("Change Prefix");
+                    return interaction.reply({
+                        content: "Select event voice channels:",
+                        components: [new ActionRowBuilder().addComponents(menu)],
+                        ephemeral: true
+                    });
+                }
 
-                const input = new TextInputBuilder()
-                    .setCustomId("prefix_input")
-                    .setLabel("New prefix")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true);
+                if (id === "setup_twitch_channel") {
 
-                modal.addComponents(new ActionRowBuilder().addComponents(input));
+                    const menu = new ChannelSelectMenuBuilder()
+                        .setCustomId("twitch_channel_select")
+                        .setPlaceholder("Select Twitch alert channel")
+                        .addChannelTypes(0);
 
-                return interaction.showModal(modal);
+                    return interaction.reply({
+                        content: "Select Twitch channel:",
+                        components: [new ActionRowBuilder().addComponents(menu)],
+                        ephemeral: true
+                    });
+                }
+
+                if (id === "setup_prefix") {
+
+                    const modal = new ModalBuilder()
+                        .setCustomId("prefix_modal")
+                        .setTitle("Change Prefix");
+
+                    const input = new TextInputBuilder()
+                        .setCustomId("prefix_input")
+                        .setLabel("New prefix")
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true);
+
+                    modal.addComponents(new ActionRowBuilder().addComponents(input));
+
+                    return interaction.showModal(modal);
+                }
+
+            } catch (err) {
+                console.error("BUTTON ERROR:", err);
+
+                if (!interaction.replied) {
+                    return interaction.reply({
+                        content: "❌ Something went wrong.",
+                        ephemeral: true
+                    });
+                }
             }
         }
 
         // =========================
-        // 📂 CHANNEL SELECT MENUS
+        // 📂 CHANNEL SELECT
         // =========================
         if (interaction.isChannelSelectMenu()) {
 
@@ -209,7 +236,7 @@ module.exports = {
         }
 
         // =========================
-        // 🎂 STRING SELECT MENUS
+        // 🎂 BIRTHDAY SELECT
         // =========================
         if (interaction.isStringSelectMenu()) {
 
@@ -263,23 +290,70 @@ module.exports = {
         // =========================
         if (interaction.isModalSubmit()) {
 
-            if (interaction.customId === "prefix_modal") {
+            try {
 
-                let prefixes = {};
-                try {
-                    prefixes = JSON.parse(fs.readFileSync(prefixPath));
-                } catch {}
+                // 🔥 EVENT HOURS MODAL
+                if (interaction.customId === "event_hours_modal") {
 
-                const newPrefix = interaction.fields.getTextInputValue("prefix_input");
+                    const hoursInput = interaction.fields.getTextInputValue("event_hours_input");
+                    const hours = parseFloat(hoursInput);
 
-                prefixes[interaction.guild.id] = newPrefix;
+                    if (isNaN(hours) || hours <= 0) {
+                        return interaction.reply({
+                            content: "❌ Enter a valid number.",
+                            ephemeral: true
+                        });
+                    }
 
-                fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
+                    const fakeMessage = {
+                        guild: interaction.guild,
+                        channel: interaction.channel,
+                        member: interaction.member,
+                        author: interaction.user,
+                        reply: (msg) => interaction.channel.send(msg)
+                    };
 
-                return interaction.reply({
-                    content: `✅ Prefix updated to \`${newPrefix}\``,
-                    ephemeral: true
-                });
+                    const minutes = Math.round(hours * 60);
+
+                    await client.commands
+                        .get("startevent")
+                        .execute(fakeMessage, client, [String(minutes)]);
+
+                    return interaction.reply({
+                        content: `⏳ Auto event started for ${hours} hour(s)`,
+                        ephemeral: true
+                    });
+                }
+
+                // ⚙️ PREFIX MODAL
+                if (interaction.customId === "prefix_modal") {
+
+                    let prefixes = {};
+                    try {
+                        prefixes = JSON.parse(fs.readFileSync(prefixPath));
+                    } catch {}
+
+                    const newPrefix = interaction.fields.getTextInputValue("prefix_input");
+
+                    prefixes[interaction.guild.id] = newPrefix;
+
+                    fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
+
+                    return interaction.reply({
+                        content: `✅ Prefix updated to \`${newPrefix}\``,
+                        ephemeral: true
+                    });
+                }
+
+            } catch (err) {
+                console.error("MODAL ERROR:", err);
+
+                if (!interaction.replied) {
+                    return interaction.reply({
+                        content: "❌ Something went wrong.",
+                        ephemeral: true
+                    });
+                }
             }
         }
 

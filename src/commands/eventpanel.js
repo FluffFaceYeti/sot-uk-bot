@@ -9,6 +9,14 @@ module.exports = {
 
     async execute(message) {
 
+        // 🔒 Optional: Admin-only panel command
+        if (!message.member.permissions.has("Administrator")) {
+            return message.reply("❌ Admins only.");
+        }
+
+        // =====================
+        // 🎮 MAIN CONTROLS
+        // =====================
         const row1 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("event_start_manual")
@@ -16,8 +24,8 @@ module.exports = {
                 .setStyle(ButtonStyle.Success),
 
             new ButtonBuilder()
-                .setCustomId("event_start_1h")
-                .setLabel("Start 1 Hour")
+                .setCustomId("event_start_auto") // ✅ UPDATED
+                .setLabel("Start Auto")          // ✅ UPDATED
                 .setStyle(ButtonStyle.Primary),
 
             new ButtonBuilder()
@@ -26,6 +34,9 @@ module.exports = {
                 .setStyle(ButtonStyle.Danger)
         );
 
+        // =====================
+        // 🔔 ALERT CONTROLS
+        // =====================
         const row2 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("event_go")
@@ -48,6 +59,9 @@ module.exports = {
                 .setStyle(ButtonStyle.Secondary)
         );
 
+        // =====================
+        // ⚙️ INFO + SETUP
+        // =====================
         const row3 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("event_status")
