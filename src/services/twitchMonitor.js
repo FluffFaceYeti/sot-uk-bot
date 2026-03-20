@@ -40,25 +40,31 @@ async function checkStream(client) {
     );
 
     const stream = response.data.data[0];
+    const streamer = process.env.TWITCH_CHANNEL;
 
-    // 🔴 STREAM JUST WENT LIVE
-    if (stream && !live) {
+    // 🔴 STREAM IS LIVE (update status EVERY time)
+    if (stream) {
 
-        live = true;
+        const safeTitle = stream.title
+            ? stream.title.substring(0, 100)
+            : "Live on Twitch";
 
-        const streamer = process.env.TWITCH_CHANNEL;
-
-        // ✅ SET STREAMING STATUS (IMPORTANT: includes URL)
-        console.log("Updating bot status to STREAMING");
+        console.log("Updating bot status with stream title");
 
         client.user.setPresence({
             activities: [{
-                name: `${streamer} on Twitch`,
+                name: `🔴 ${safeTitle}`,
                 type: 1, // STREAMING
-                url: `https://twitch.tv/${streamer}` // REQUIRED
+                url: `https://twitch.tv/${streamer}`
             }],
             status: "online"
         });
+    }
+
+    // 🔴 STREAM JUST WENT LIVE (send embed once)
+    if (stream && !live) {
+
+        live = true;
 
         const fs = require("fs");
         const path = require("path");
