@@ -6,80 +6,109 @@ const permPath = path.join(__dirname, "../../userdata/weevilPermissions.json");
 const blacklistPath = path.join(__dirname, "../../userdata/weevilBlacklist.json");
 
 module.exports = {
-name: "weevil",
+    name: "naughty",
 
-async execute(message) {
+    async execute(message) {
 
+        // LOAD BLACKLIST
+        let blacklist = { blocked: {} };
+        try {
+            blacklist = JSON.parse(fs.readFileSync(blacklistPath));
+        } catch {}
 
-// LOAD BLACKLIST
-let blacklist = { blocked: {} };
+        const blockedMessage = blacklist.blocked[message.author.id];
+        if (blockedMessage) {
+            return message.reply(blockedMessage);
+        }
 
-try {
-    blacklist = JSON.parse(fs.readFileSync(blacklistPath));
-} catch {}
+        // LOAD PERMISSIONS
+        let perms = { users: [], roles: [] };
+        try {
+            perms = JSON.parse(fs.readFileSync(permPath));
+        } catch {}
 
-// CHECK IF USER IS BLOCKED
-const blockedMessage = blacklist.blocked[message.author.id];
+        const allowedUser = perms.users.includes(message.author.id);
+        const allowedRole = message.member.roles.cache.some(role => perms.roles.includes(role.id));
 
-if (blockedMessage) {
-    return message.reply(blockedMessage);
-}
+        if (!allowedUser && !allowedRole && !message.member.permissions.has("Administrator")) {
+            return message.reply("🚫 You don't have permission to use this command.");
+        }
 
-// LOAD PERMISSIONS
-let perms = { users: [], roles: [] };
+        // MUST BE IN VC
+        const authorVC = message.member.voice.channel;
+        if (!authorVC) {
+            return message.reply("You must be in a voice channel to use this command.");
+        }
 
-try {
-    perms = JSON.parse(fs.readFileSync(permPath));
-} catch {}
+        const trollChannelId = "1475273097996406784";
 
-const allowedUser = perms.users.includes(message.author.id);
-const allowedRole = message.member.roles.cache.some(role => perms.roles.includes(role.id));
+        // GET TARGETS
+        const mentionEveryone = message.content.includes("@everyone");
+        const mentionedUsers = message.mentions.members;
 
-if (!allowedUser && !allowedRole && !message.member.permissions.has("Administrator")) {
-    return message.reply("🚫 You don't have permission to use this command.");
-}
+        let targets = [];
 
-const targetUserId = "461842426613465089";
-const trollChannelId = "1475273097996406784";
+        if (mentionEveryone) {
+            // Everyone in your VC except you
+            targets = authorVC.members.filter(m => m.id !== message.author.id);
 
-const member = message.guild.members.cache.get(targetUserId);
+        } else if (mentionedUsers.size > 0) {
+            // Only users in YOUR VC
+            targets = mentionedUsers.filter(m => 
+                m.voice.channel && m.voice.channel.id === authorVC.id
+            );
 
-if (!member) {
-    return message.reply("Target user not found.");
-}
+            if (targets.size === 0) {
+                return message.reply("That user must be in your voice channel.");
+            }
 
-const voiceChannel = member.voice.channel;
+        } else {
+            return message.reply("Please mention a user or use @everyone.");
+        }
 
-if (!voiceChannel) {
-    return message.reply("Target user is not in a voice channel.");
-}
+        // OPTIONAL: Prevent moving admins (uncomment if needed)
+        /*
+        targets = targets.filter(m => !m.permissions.has("Administrator"));
+        */
 
-const connection = joinVoiceChannel({
-    channelId: voiceChannel.id,
-    guildId: message.guild.id,
-    adapterCreator: message.guild.voiceAdapterCreator
-});
+        if (targets.size === 0) {
+            return message.reply("No valid targets found.");
+        }
 
-const player = createAudioPlayer();
+        // JOIN YOUR VC
+        const connection = joinVoiceChannel({
+            channelId: authorVC.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator
+        });
 
-const resource = createAudioResource(
-    path.join(__dirname, "../audio/weevil.wav")
-);
+        const player = createAudioPlayer();
 
-connection.subscribe(player);
-player.play(resource);
+        const resource = createAudioResource(
+            path.join(__dirname, "../audio/weevil.wav") // change if needed
+        );
 
-player.on(AudioPlayerStatus.Idle, () => {
+        connection.subscribe(player);
+        player.play(resource);
 
-    const trollChannel = message.guild.channels.cache.get(trollChannelId);
+        player.on(AudioPlayerStatus.Idle, async () => {
 
-    if (trollChannel) {
-        member.voice.setChannel(trollChannel);
+            const trollChannel = message.guild.channels.cache.get(trollChannelId);
+
+            if (trollChannel) {
+                for (const member of targets.values()) {
+                    if (member.voice.channel) {
+                        try {
+                            await member.voice.setChannel(trollChannel);
+                        } catch (err) {
+                            console.log(`Failed to move ${member.user.tag}`);
+                        }
+                    }
+                }
+            }
+
+            connection.destroy();
+        });
+
     }
-
-    connection.destroy();
-});
-
-
-}
 };
