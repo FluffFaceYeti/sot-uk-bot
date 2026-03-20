@@ -54,10 +54,13 @@ module.exports = {
 
             const id = interaction.customId;
 
+            // 🔥 FIX: use cached member (fixes VC issues)
+            const member = interaction.guild.members.cache.get(interaction.user.id);
+
             const fakeMessage = {
                 guild: interaction.guild,
                 channel: interaction.channel,
-                member: interaction.member,
+                member: member,
                 author: interaction.user,
                 reply: (msg) => interaction.channel.send(msg)
             };
@@ -76,7 +79,6 @@ module.exports = {
                     return reply("✅ Manual event started");
                 }
 
-                // 🔥 START AUTO (MODAL INPUT)
                 if (id === "event_start_auto") {
 
                     const modal = new ModalBuilder()
@@ -200,23 +202,26 @@ module.exports = {
         // =========================
         if (interaction.isChannelSelectMenu()) {
 
-            if (interaction.customId === "birthday_channel_select") {
+            // 🎮 EVENT CHANNELS (PER SERVER)
+            if (interaction.customId === "event_channel_select") {
 
                 let config = {};
+
                 try {
-                    config = JSON.parse(fs.readFileSync(birthdayChannelPath));
+                    config = JSON.parse(fs.readFileSync(eventPath));
                 } catch {}
 
-                config[interaction.guild.id] = interaction.values[0];
+                config[interaction.guild.id] = interaction.values;
 
-                fs.writeFileSync(birthdayChannelPath, JSON.stringify(config, null, 2));
+                fs.writeFileSync(eventPath, JSON.stringify(config, null, 2));
 
                 return interaction.reply({
-                    content: "🎂 Birthday channel saved!",
+                    content: `✅ Saved ${interaction.values.length} event channel(s)!`,
                     ephemeral: true
                 });
             }
 
+            // 📡 TWITCH
             if (interaction.customId === "twitch_channel_select") {
 
                 let config = {};
@@ -234,70 +239,20 @@ module.exports = {
                 });
             }
 
-            if (interaction.customId === "event_channel_select") {
+            // 🎂 BIRTHDAY
+            if (interaction.customId === "birthday_channel_select") {
 
-            let config = {};
-
-            try {
-            config = JSON.parse(fs.readFileSync(eventPath));
-            } catch {}
-
-            config[interaction.guild.id] = interaction.values;
-
-            fs.writeFileSync(eventPath, JSON.stringify(config, null, 2));
-
-            return interaction.reply({
-            content: `✅ Saved ${interaction.values.length} event channel(s)!`,
-            ephemeral: true
-            });
-            }
-        }
-
-        // =========================
-        // 🎂 BIRTHDAY SELECT
-        // =========================
-        if (interaction.isStringSelectMenu()) {
-
-            const userId = interaction.user.id;
-
-            if (interaction.customId === "birthday_month") {
-
-                temp[userId] = { month: parseInt(interaction.values[0]) };
-
-                return interaction.reply({
-                    content: "Now pick your day 🎉",
-                    ephemeral: true
-                });
-            }
-
-            if (
-                interaction.customId === "birthday_day_1" ||
-                interaction.customId === "birthday_day_2"
-            ) {
-
-                if (!temp[userId]) {
-                    return interaction.reply({
-                        content: "Pick a month first!",
-                        ephemeral: true
-                    });
-                }
-
-                const month = temp[userId].month;
-                const day = parseInt(interaction.values[0]);
-
-                let data = {};
+                let config = {};
                 try {
-                    data = JSON.parse(fs.readFileSync(birthdayPath));
+                    config = JSON.parse(fs.readFileSync(birthdayChannelPath));
                 } catch {}
 
-                data[userId] = { day, month };
+                config[interaction.guild.id] = interaction.values[0];
 
-                fs.writeFileSync(birthdayPath, JSON.stringify(data, null, 2));
-
-                delete temp[userId];
+                fs.writeFileSync(birthdayChannelPath, JSON.stringify(config, null, 2));
 
                 return interaction.reply({
-                    content: `🎂 Birthday saved: **${day}/${month}**`,
+                    content: "🎂 Birthday channel saved!",
                     ephemeral: true
                 });
             }
@@ -310,11 +265,11 @@ module.exports = {
 
             try {
 
-                // 🔥 EVENT HOURS MODAL
                 if (interaction.customId === "event_hours_modal") {
 
-                    const hoursInput = interaction.fields.getTextInputValue("event_hours_input");
-                    const hours = parseFloat(hoursInput);
+                    const hours = parseFloat(
+                        interaction.fields.getTextInputValue("event_hours_input")
+                    );
 
                     if (isNaN(hours) || hours <= 0) {
                         return interaction.reply({
@@ -323,10 +278,12 @@ module.exports = {
                         });
                     }
 
+                    const member = interaction.guild.members.cache.get(interaction.user.id);
+
                     const fakeMessage = {
                         guild: interaction.guild,
                         channel: interaction.channel,
-                        member: interaction.member,
+                        member: member,
                         author: interaction.user,
                         reply: (msg) => interaction.channel.send(msg)
                     };
@@ -343,7 +300,6 @@ module.exports = {
                     });
                 }
 
-                // ⚙️ PREFIX MODAL
                 if (interaction.customId === "prefix_modal") {
 
                     let prefixes = {};
