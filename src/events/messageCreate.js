@@ -18,6 +18,11 @@ module.exports = {
         const command = client.commands.get(commandName);
         if (!command) return;
 
+        // 🔒 GLOBAL ADMIN LOCK
+        if (!message.member.permissions.has("Administrator")) {
+            return message.reply("❌ This bot is admin-only.");
+        }
+
         try {
             command.execute(message, client, args);
         } catch (error) {

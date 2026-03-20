@@ -5,14 +5,18 @@ const path = require("path");
 // 🎂 Birthday system
 const { checkBirthdays } = require("../utils/birthdayCheck");
 
+// 🔴 Twitch system
 let twitchToken = null;
 let isLive = false;
+
 const { checkStream } = require("../services/twitchMonitor");
+
 const statusFile = path.join(__dirname, "../../userdata/status.json");
 const configPath = path.join(__dirname, "../../userdata/twitchConfig.json");
 
 const STREAMER = "sot_uk";
 
+// 🔑 Get Twitch token
 async function getTwitchToken() {
     const response = await axios.post(
         "https://id.twitch.tv/oauth2/token",
@@ -29,6 +33,7 @@ async function getTwitchToken() {
     twitchToken = response.data.access_token;
 }
 
+// 🔍 Check Twitch live status (presence only)
 async function checkTwitch(client) {
 
     if (!twitchToken) {
@@ -50,21 +55,10 @@ async function checkTwitch(client) {
 
     const stream = response.data.data[0];
 
-    let config = {};
-    try {
-        if (fs.existsSync(configPath)) {
-            config = JSON.parse(fs.readFileSync(configPath));
-        }
-    } catch (err) {
-        console.error("Config load error:", err);
-    }
-
     // 🔴 LIVE
     if (stream && !isLive) {
 
         isLive = true;
-
-        // ❌ No message sending here anymore (handled by twitchMonitor.js)
 
         client.user.setPresence({
             activities: [{
@@ -85,9 +79,7 @@ async function checkTwitch(client) {
         try {
             if (fs.existsSync(statusFile)) {
                 const saved = JSON.parse(fs.readFileSync(statusFile));
-                if (saved.text) {
-                    statusText = saved.text;
-                }
+                if (saved.text) statusText = saved.text;
             }
         } catch {}
 
@@ -109,14 +101,13 @@ module.exports = {
 
         console.log(`SoT_UK Bot is online as ${client.user.tag}`);
 
+        // 🟢 Default status
         let statusText = "🏴‍☠️ Stealing your booty 🏴‍☠️";
 
         try {
             if (fs.existsSync(statusFile)) {
                 const statusData = JSON.parse(fs.readFileSync(statusFile));
-                if (statusData.text) {
-                    statusText = statusData.text;
-                }
+                if (statusData.text) statusText = statusData.text;
             }
         } catch {}
 
@@ -128,16 +119,20 @@ module.exports = {
             status: "online"
         });
 
-        // 🔴 Twitch presence checker
-        // 🔴 Twitch alert system (embed)
+        // 🔴 Twitch alert system (external embed handler)
         checkStream(client);
 
         setInterval(() => {
-        checkStream(client);
+            checkStream(client);
         }, 90000);
 
-        // 🎂 Birthday system (FIXED)
-        checkBirthdays(client); // run immediately
+        // (Optional presence updater if you want both)
+        // setInterval(() => {
+        //     checkTwitch(client);
+        // }, 90000);
+
+        // 🎂 Birthday system
+        checkBirthdays(client);
 
         setInterval(() => {
             checkBirthdays(client);

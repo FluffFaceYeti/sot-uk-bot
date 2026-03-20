@@ -1,6 +1,12 @@
 const fs = require("fs");
 const path = require("path");
-const { ChannelSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");
+const { 
+    ChannelSelectMenuBuilder, 
+    ActionRowBuilder, 
+    ModalBuilder, 
+    TextInputBuilder, 
+    TextInputStyle 
+} = require("discord.js");
 
 // ✅ BASE PATH
 const basePath = path.join(__dirname, "../../userdata");
@@ -12,7 +18,7 @@ const prefixPath = path.join(basePath, "prefixes.json");
 const birthdayPath = path.join(basePath, "birthdays.json");
 const birthdayChannelPath = path.join(basePath, "birthdayChannels.json");
 
-// temp storage (move OUTSIDE function so it persists)
+// temp storage
 const temp = {};
 
 // ensure folder exists
@@ -26,11 +32,95 @@ module.exports = {
     async execute(interaction, client) {
 
         // =========================
+        // 🔒 GLOBAL ADMIN LOCK (buttons + menus + modals)
+        // =========================
+        if (
+            interaction.isButton() ||
+            interaction.isChannelSelectMenu() ||
+            interaction.isStringSelectMenu() ||
+            interaction.isModalSubmit()
+        ) {
+            if (!interaction.member.permissions.has("Administrator")) {
+                return interaction.reply({
+                    content: "❌ Admins only.",
+                    ephemeral: true
+                });
+            }
+        }
+
+        // =========================
         // 🎯 BUTTONS
         // =========================
         if (interaction.isButton()) {
 
-            if (interaction.customId === "setup_event_channels") {
+            const id = interaction.customId;
+
+            // 🔁 Fake message (so existing commands still work)
+            const fakeMessage = {
+                guild: interaction.guild,
+                channel: interaction.channel,
+                member: interaction.member,
+                author: interaction.user,
+                reply: (msg) => interaction.channel.send(msg)
+            };
+
+            const reply = (msg) =>
+                interaction.reply({ content: msg, ephemeral: true });
+
+            // =====================
+            // 🎮 EVENT PANEL BUTTONS
+            // =====================
+
+            if (id === "event_start_manual") {
+                client.commands.get("startevent").execute(fakeMessage, client, []);
+                return reply("✅ Manual event started");
+            }
+
+            if (id === "event_start_1h") {
+                client.commands.get("startevent").execute(fakeMessage, client, ["60"]);
+                return reply("⏳ 1 hour event started");
+            }
+
+            if (id === "event_stop") {
+                client.commands.get("stopevent").execute(fakeMessage);
+                return reply("🛑 Event stopped");
+            }
+
+            if (id === "event_go") {
+                client.commands.get("go").execute(fakeMessage);
+                return reply("▶️ GO triggered");
+            }
+
+            if (id === "event_5") {
+                client.commands.get("5").execute(fakeMessage);
+                return reply("⏱️ 5 minute alert");
+            }
+
+            if (id === "event_30") {
+                client.commands.get("30").execute(fakeMessage);
+                return reply("⏱️ 30 minute alert");
+            }
+
+            if (id === "event_hour") {
+                client.commands.get("hour").execute(fakeMessage);
+                return reply("⏱️ 1 hour alert");
+            }
+
+            if (id === "event_status") {
+                client.commands.get("eventstatus").execute(fakeMessage);
+                return reply("📊 Status sent");
+            }
+
+            if (id === "event_setup") {
+                client.commands.get("setupevent").execute(fakeMessage);
+                return reply("⚙️ Setup opened");
+            }
+
+            // =====================
+            // ⚙️ YOUR EXISTING SETUP BUTTONS
+            // =====================
+
+            if (id === "setup_event_channels") {
 
                 const menu = new ChannelSelectMenuBuilder()
                     .setCustomId("event_channel_select")
@@ -46,7 +136,7 @@ module.exports = {
                 });
             }
 
-            if (interaction.customId === "setup_twitch_channel") {
+            if (id === "setup_twitch_channel") {
 
                 const menu = new ChannelSelectMenuBuilder()
                     .setCustomId("twitch_channel_select")
@@ -60,7 +150,7 @@ module.exports = {
                 });
             }
 
-            if (interaction.customId === "setup_prefix") {
+            if (id === "setup_prefix") {
 
                 const modal = new ModalBuilder()
                     .setCustomId("prefix_modal")
@@ -79,7 +169,7 @@ module.exports = {
         }
 
         // =========================
-        // 🎂 DROPDOWNS (birthday + channels)
+        // 📂 CHANNEL SELECT MENUS
         // =========================
         if (interaction.isChannelSelectMenu()) {
 
@@ -118,7 +208,9 @@ module.exports = {
             }
         }
 
-        // 🎂 Birthday dropdowns
+        // =========================
+        // 🎂 STRING SELECT MENUS
+        // =========================
         if (interaction.isStringSelectMenu()) {
 
             const userId = interaction.user.id;
@@ -134,8 +226,8 @@ module.exports = {
             }
 
             if (
-            interaction.customId === "birthday_day_1" ||
-            interaction.customId === "birthday_day_2"
+                interaction.customId === "birthday_day_1" ||
+                interaction.customId === "birthday_day_2"
             ) {
 
                 if (!temp[userId]) {
@@ -161,7 +253,7 @@ module.exports = {
 
                 return interaction.reply({
                     content: `🎂 Birthday saved: **${day}/${month}**`,
-                    flags: 64
+                    ephemeral: true
                 });
             }
         }
@@ -192,7 +284,7 @@ module.exports = {
         }
 
         // =========================
-        // 💬 COMMANDS
+        // 💬 SLASH COMMANDS
         // =========================
         if (!interaction.isChatInputCommand()) return;
 
