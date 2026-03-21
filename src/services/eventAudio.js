@@ -44,13 +44,16 @@ async function playEventAudio(message, audioFile) {
     return message.reply("❌ Audio file not found.");
   }
 
+  // 🔥 FIX: Load audio into buffer ONCE
+  const audioBuffer = fs.readFileSync(audioPath);
+
   const startMessage = await message.channel.send(
     `🔔 Playing event alert: **${audioFile}**`
   );
 
   await sleep(1000);
 
-  // 🔥 STABLE MULTI-CHANNEL PLAYBACK
+  // 🔥 MULTI-CHANNEL PLAYBACK (FIXED)
   const playPromises = channels.map(async (channelId, index) => {
 
     const channel = message.guild.channels.cache.get(channelId);
@@ -70,7 +73,7 @@ async function playEventAudio(message, audioFile) {
 
     try {
 
-      // 🔥 small delay to prevent Discord connection conflicts
+      // slight stagger to prevent Discord race conditions
       await sleep(index * 300);
 
       const connection = joinVoiceChannel({
@@ -90,8 +93,9 @@ async function playEventAudio(message, audioFile) {
 
       const player = createAudioPlayer();
 
+      // 🔥 FIX: Use buffer instead of stream
       const resource = createAudioResource(
-        fs.createReadStream(audioPath),
+        Buffer.from(audioBuffer),
         { inputType: StreamType.Arbitrary }
       );
 
@@ -110,7 +114,7 @@ async function playEventAudio(message, audioFile) {
 
   });
 
-  // 🔥 wait for ALL channels
+  // wait for ALL channels
   await Promise.all(playPromises);
 
   const endMessage = await message.channel.send("🔔 Alert finished!");
