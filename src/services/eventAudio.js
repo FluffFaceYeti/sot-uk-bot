@@ -19,38 +19,59 @@ function sleep(ms) {
 
 async function playEventAudio(message, audioFile) {
 
-  const data = JSON.parse(fs.readFileSync(dataPath));
+  let data = {};
+
+  try {
+    data = JSON.parse(fs.readFileSync(dataPath));
+  } catch (err) {
+    console.error("❌ Failed to load eventChannels.json:", err);
+  }
+
+  const guildChannels = data[message.guild.id];
+
+  console.log("📦 FULL CONFIG:", data);
+  console.log("🎯 GUILD CHANNELS:", guildChannels);
+
+  if (!guildChannels || guildChannels.length === 0) {
+    return message.reply("❌ No event channels configured for this server.");
+  }
+
+  const channels = [...new Set(guildChannels)];
 
   const audioPath = path.join(__dirname, "../audio", audioFile);
 
   if (!fs.existsSync(audioPath)) {
-    return message.reply("Audio file not found.");
+    return message.reply("❌ Audio file not found.");
   }
 
-  const guildChannels = data[message.guild.id] || [];
-  const channels = [...new Set(guildChannels)];
+  const startMessage = await message.channel.send(
+    `🔔 Playing event alert: **${audioFile}**`
+  );
 
-  if (channels.length === 0) {
-    return message.reply("❌ No event channels configured for this server.");
-  }
+  await sleep(1000);
 
-  const startMessage = await message.channel.send(`🔔 Playing event alert: **${audioFile}**`);
-
-  await sleep(1000); // shorter delay (optional tweak)
-
-  // 🔥 SIMULTANEOUS AUDIO
-  const playPromises = channels.map(async (channelId) => {
+  // 🔥 STABLE MULTI-CHANNEL PLAYBACK
+  const playPromises = channels.map(async (channelId, index) => {
 
     const channel = message.guild.channels.cache.get(channelId);
-    if (!channel || channel.type !== 2) return;
 
-    // 🔒 Permission check (prevents silent failures)
+    if (!channel || channel.type !== 2) {
+      console.log(`❌ Invalid channel ID: ${channelId}`);
+      return;
+    }
+
+    console.log(`➡️ Joining: ${channel.name}`);
+
+    // 🔒 Permission check
     if (!channel.permissionsFor(message.guild.members.me).has(["Connect", "Speak"])) {
       console.log(`❌ Missing permissions in ${channel.name}`);
       return;
     }
 
     try {
+
+      // 🔥 small delay to prevent Discord connection conflicts
+      await sleep(index * 300);
 
       const connection = joinVoiceChannel({
         channelId: channel.id,
@@ -89,7 +110,7 @@ async function playEventAudio(message, audioFile) {
 
   });
 
-  // 🔥 WAIT FOR ALL CHANNELS TO FINISH
+  // 🔥 wait for ALL channels
   await Promise.all(playPromises);
 
   const endMessage = await message.channel.send("🔔 Alert finished!");
@@ -100,7 +121,7 @@ async function playEventAudio(message, audioFile) {
     await startMessage.delete();
     await endMessage.delete();
   } catch (err) {
-    console.error("Failed to delete messages:", err);
+    console.error("❌ Failed to delete messages:", err);
   }
 }
 

@@ -113,13 +113,18 @@ module.exports = {
                 }
 
                 if (id === "event_hour") {
-                    client.commands.get("hour").execute(fakeMessage);
-                    return reply("⏱️ 1 hour alert");
+                client.commands.get("hour").execute(fakeMessage);
+                return reply("⏱️ 1 hour alert");
+                }
+
+                if (id === "event_time") {
+                client.commands.get("time").execute(fakeMessage);
+                return reply("⏱️ Event end triggered");
                 }
 
                 if (id === "event_status") {
-                    client.commands.get("eventstatus").execute(fakeMessage);
-                    return reply("📊 Status sent");
+                client.commands.get("eventstatus").execute(fakeMessage);
+                return reply("📊 Status sent");
                 }
 
                 if (id === "event_setup") {

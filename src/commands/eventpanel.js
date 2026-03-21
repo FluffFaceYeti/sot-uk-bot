@@ -9,7 +9,6 @@ module.exports = {
 
     async execute(message) {
 
-        // 🔒 Optional: Admin-only panel command
         if (!message.member.permissions.has("Administrator")) {
             return message.reply("❌ Admins only.");
         }
@@ -24,8 +23,8 @@ module.exports = {
                 .setStyle(ButtonStyle.Success),
 
             new ButtonBuilder()
-                .setCustomId("event_start_auto") // ✅ UPDATED
-                .setLabel("Start Auto")          // ✅ UPDATED
+                .setCustomId("event_start_auto")
+                .setLabel("Start Auto")
                 .setStyle(ButtonStyle.Primary),
 
             new ButtonBuilder()
@@ -56,6 +55,12 @@ module.exports = {
             new ButtonBuilder()
                 .setCustomId("event_hour")
                 .setLabel("1 Hour Alert")
+                .setStyle(ButtonStyle.Secondary),
+
+            // ✅ NEW BUTTON
+            new ButtonBuilder()
+                .setCustomId("event_time")
+                .setLabel("Time")
                 .setStyle(ButtonStyle.Secondary)
         );
 
