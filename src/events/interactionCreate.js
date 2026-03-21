@@ -53,14 +53,12 @@ module.exports = {
         if (interaction.isButton()) {
 
             const id = interaction.customId;
-
-            // 🔥 FIX: use cached member (fixes VC issues)
             const member = interaction.guild.members.cache.get(interaction.user.id);
 
             const fakeMessage = {
                 guild: interaction.guild,
                 channel: interaction.channel,
-                member: member,
+                member,
                 author: interaction.user,
                 reply: (msg) => interaction.channel.send(msg)
             };
@@ -69,10 +67,6 @@ module.exports = {
                 interaction.reply({ content: msg, ephemeral: true });
 
             try {
-
-                // =====================
-                // 🎮 EVENT PANEL
-                // =====================
 
                 if (id === "event_start_manual") {
                     client.commands.get("startevent").execute(fakeMessage, client, []);
@@ -89,7 +83,6 @@ module.exports = {
                         .setCustomId("event_hours_input")
                         .setLabel("Duration (hours)")
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder("Example: 1, 2.5, 3")
                         .setRequired(true);
 
                     modal.addComponents(
@@ -133,10 +126,6 @@ module.exports = {
                     client.commands.get("setupevent").execute(fakeMessage);
                     return reply("⚙️ Setup opened");
                 }
-
-                // =====================
-                // ⚙️ SETUP BUTTONS
-                // =====================
 
                 if (id === "setup_event_channels") {
 
@@ -202,8 +191,17 @@ module.exports = {
         // =========================
         if (interaction.isChannelSelectMenu()) {
 
-            // 🎮 EVENT CHANNELS (PER SERVER)
+            // 🎮 EVENT CHANNELS (FIXED)
             if (interaction.customId === "event_channel_select") {
+
+                console.log("📥 SELECT VALUES:", interaction.values);
+
+                if (!interaction.values || interaction.values.length === 0) {
+                    return interaction.reply({
+                        content: "❌ No channels selected. Previous config kept.",
+                        ephemeral: true
+                    });
+                }
 
                 let config = {};
 
@@ -215,13 +213,15 @@ module.exports = {
 
                 fs.writeFileSync(eventPath, JSON.stringify(config, null, 2));
 
+                console.log("✅ SAVED CHANNELS:", config[interaction.guild.id]);
+
                 return interaction.reply({
                     content: `✅ Saved ${interaction.values.length} event channel(s)!`,
                     ephemeral: true
                 });
             }
 
-            // 📡 TWITCH
+            // Twitch
             if (interaction.customId === "twitch_channel_select") {
 
                 let config = {};
@@ -239,7 +239,7 @@ module.exports = {
                 });
             }
 
-            // 🎂 BIRTHDAY
+            // Birthday
             if (interaction.customId === "birthday_channel_select") {
 
                 let config = {};
@@ -283,7 +283,7 @@ module.exports = {
                     const fakeMessage = {
                         guild: interaction.guild,
                         channel: interaction.channel,
-                        member: member,
+                        member,
                         author: interaction.user,
                         reply: (msg) => interaction.channel.send(msg)
                     };
@@ -329,21 +329,6 @@ module.exports = {
                     });
                 }
             }
-        }
-
-        // =========================
-        // 💬 SLASH COMMANDS
-        // =========================
-        if (!interaction.isChatInputCommand()) return;
-
-        const command = client.commands.get(interaction.commandName);
-        if (!command) return;
-
-        try {
-            await command.execute(interaction, client);
-        } catch (error) {
-            console.error(error);
-            interaction.reply({ content: "Error executing command.", ephemeral: true });
         }
     }
 };
