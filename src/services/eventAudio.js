@@ -29,9 +29,6 @@ async function playEventAudio(message, audioFile) {
 
   const guildChannels = data[message.guild.id];
 
-  console.log("📦 FULL CONFIG:", data);
-  console.log("🎯 GUILD CHANNELS:", guildChannels);
-
   if (!guildChannels || guildChannels.length === 0) {
     return message.reply("❌ No event channels configured for this server.");
   }
@@ -44,37 +41,30 @@ async function playEventAudio(message, audioFile) {
     return message.reply("❌ Audio file not found.");
   }
 
-  // 🔥 FIX: Load audio into buffer ONCE
-  const audioBuffer = fs.readFileSync(audioPath);
-
   const startMessage = await message.channel.send(
     `🔔 Playing event alert: **${audioFile}**`
   );
 
   await sleep(1000);
 
-  // 🔥 MULTI-CHANNEL PLAYBACK (FIXED)
-  const playPromises = channels.map(async (channelId, index) => {
+  // 🔥 SEQUENTIAL PLAYBACK (VERY STABLE)
+  for (const channelId of channels) {
 
     const channel = message.guild.channels.cache.get(channelId);
 
     if (!channel || channel.type !== 2) {
       console.log(`❌ Invalid channel ID: ${channelId}`);
-      return;
+      continue;
     }
 
     console.log(`➡️ Joining: ${channel.name}`);
 
-    // 🔒 Permission check
     if (!channel.permissionsFor(message.guild.members.me).has(["Connect", "Speak"])) {
       console.log(`❌ Missing permissions in ${channel.name}`);
-      return;
+      continue;
     }
 
     try {
-
-      // slight stagger to prevent Discord race conditions
-      await sleep(index * 300);
 
       const connection = joinVoiceChannel({
         channelId: channel.id,
@@ -88,14 +78,13 @@ async function playEventAudio(message, audioFile) {
       } catch (err) {
         console.log(`❌ Failed to connect to ${channel.name}`);
         connection.destroy();
-        return;
+        continue;
       }
 
       const player = createAudioPlayer();
 
-      // 🔥 FIX: Use buffer instead of stream
       const resource = createAudioResource(
-        Buffer.from(audioBuffer),
+        fs.createReadStream(audioPath),
         { inputType: StreamType.Arbitrary }
       );
 
@@ -108,14 +97,13 @@ async function playEventAudio(message, audioFile) {
 
       connection.destroy();
 
+      // 🔥 small delay between channels
+      await sleep(500);
+
     } catch (err) {
       console.error(`❌ Voice error in ${channel?.name}:`, err);
     }
-
-  });
-
-  // wait for ALL channels
-  await Promise.all(playPromises);
+  }
 
   const endMessage = await message.channel.send("🔔 Alert finished!");
 
