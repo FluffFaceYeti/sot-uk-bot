@@ -29,18 +29,26 @@ async function playEventAudio(message, audioFile) {
 
   const guildChannels = data[message.guild.id] || [];
   const channels = [...new Set(guildChannels)];
+
   if (channels.length === 0) {
     return message.reply("❌ No event channels configured for this server.");
   }
-  // store the messages
+
   const startMessage = await message.channel.send(`🔔 Playing event alert: **${audioFile}**`);
 
-  await sleep(3000);
+  await sleep(1000); // shorter delay (optional tweak)
 
-  for (const channelId of channels) {
+  // 🔥 SIMULTANEOUS AUDIO
+  const playPromises = channels.map(async (channelId) => {
 
     const channel = message.guild.channels.cache.get(channelId);
-    if (!channel) continue;
+    if (!channel || channel.type !== 2) return;
+
+    // 🔒 Permission check (prevents silent failures)
+    if (!channel.permissionsFor(message.guild.members.me).has(["Connect", "Speak"])) {
+      console.log(`❌ Missing permissions in ${channel.name}`);
+      return;
+    }
 
     try {
 
@@ -51,7 +59,13 @@ async function playEventAudio(message, audioFile) {
         selfDeaf: false
       });
 
-      await entersState(connection, VoiceConnectionStatus.Ready, 15000);
+      try {
+        await entersState(connection, VoiceConnectionStatus.Ready, 20000);
+      } catch (err) {
+        console.log(`❌ Failed to connect to ${channel.name}`);
+        connection.destroy();
+        return;
+      }
 
       const player = createAudioPlayer();
 
@@ -69,18 +83,18 @@ async function playEventAudio(message, audioFile) {
 
       connection.destroy();
 
-      await sleep(500);
-
     } catch (err) {
-      console.error("Voice error:", err);
+      console.error(`❌ Voice error in ${channel?.name}:`, err);
     }
 
-  }
+  });
+
+  // 🔥 WAIT FOR ALL CHANNELS TO FINISH
+  await Promise.all(playPromises);
 
   const endMessage = await message.channel.send("🔔 Alert finished!");
 
-  // cleanup after short delay
-  await sleep(3000);
+  await sleep(2000);
 
   try {
     await startMessage.delete();
@@ -88,7 +102,6 @@ async function playEventAudio(message, audioFile) {
   } catch (err) {
     console.error("Failed to delete messages:", err);
   }
-
 }
 
 module.exports = { playEventAudio };
