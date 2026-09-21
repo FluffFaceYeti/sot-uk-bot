@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const prefixPath = path.join(__dirname, "../data/prefixes.json");
+const prefixPath = path.join(__dirname, "../../userdata/prefixes.json");
 
 function getPrefixes() {
     if (!fs.existsSync(prefixPath)) {

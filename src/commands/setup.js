@@ -22,7 +22,7 @@ execute(message) {
 
     try {
         const data = JSON.parse(fs.readFileSync(eventPath));
-        eventChannels = data.channels || [];
+        eventChannels = data[message.guild.id] || [];
     } catch {}
 
     try {

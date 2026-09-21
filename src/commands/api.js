@@ -1,4 +1,5 @@
 const https = require("https");
+const { getPrefix } = require("../utils/prefixManager");
 
 const apiCommands = [
  "pirate"
@@ -11,7 +12,7 @@ module.exports = {
 
  async execute(message, client, args) {
 
-  const prefix = "!"; // change if your prefix changes
+  const prefix = getPrefix(message.guild.id);
 
   const commandUsed = message.content
    .slice(prefix.length)
@@ -20,10 +21,10 @@ module.exports = {
 
   if (!apiCommands.includes(commandUsed)) return;
 
-  const username = message.author.username;
+  const username = encodeURIComponent(message.author.username);
 
   const url =
-   `https://flufffaceyeti.twitch.socdesigns.com/?sender=${username}&type=${commandUsed}`;
+   `https://flufffaceyeti.twitch.socdesigns.com/?sender=${username}&type=${encodeURIComponent(commandUsed)}`;
 
   https.get(url, (res) => {
 

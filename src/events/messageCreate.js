@@ -19,7 +19,10 @@ module.exports = {
         if (!command) return;
 
         // 🔒 GLOBAL ADMIN LOCK
-        if (!message.member.permissions.has("Administrator")) {
+        // "naughty" manages its own allow-list of users/roles (see weevil.js), so it's exempt here.
+        const adminLockExempt = ["naughty"];
+
+        if (!adminLockExempt.includes(command.name) && !message.member.permissions.has("Administrator")) {
             return message.reply("❌ This bot is admin-only.");
         }
 

@@ -32,7 +32,7 @@ module.exports = {
     status: "online"
    });
 
-   const file = path.join(__dirname, "..", "data", "status.json");
+   const file = path.join(__dirname, "..", "..", "userdata", "status.json");
 
    fs.writeFileSync(file, JSON.stringify({
     text: statusText

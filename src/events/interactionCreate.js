@@ -179,6 +179,27 @@ module.exports = {
                     return interaction.showModal(modal);
                 }
 
+                if (id === "reset_config") {
+
+                    let eventConfig = {};
+                    let twitchConfig = {};
+                    let prefixes = {};
+
+                    try { eventConfig = JSON.parse(fs.readFileSync(eventPath)); } catch {}
+                    try { twitchConfig = JSON.parse(fs.readFileSync(twitchPath)); } catch {}
+                    try { prefixes = JSON.parse(fs.readFileSync(prefixPath)); } catch {}
+
+                    delete eventConfig[interaction.guild.id];
+                    delete twitchConfig[interaction.guild.id];
+                    delete prefixes[interaction.guild.id];
+
+                    fs.writeFileSync(eventPath, JSON.stringify(eventConfig, null, 2));
+                    fs.writeFileSync(twitchPath, JSON.stringify(twitchConfig, null, 2));
+                    fs.writeFileSync(prefixPath, JSON.stringify(prefixes, null, 2));
+
+                    return reply("♻️ Configuration reset to defaults for this server.");
+                }
+
             } catch (err) {
                 console.error("BUTTON ERROR:", err);
 
@@ -260,6 +281,66 @@ module.exports = {
                     content: "🎂 Birthday channel saved!",
                     ephemeral: true
                 });
+            }
+        }
+
+        // =========================
+        // 🎂 BIRTHDAY SELECT MENUS
+        // =========================
+        if (interaction.isStringSelectMenu()) {
+
+            const id = interaction.customId;
+
+            if (id === "birthday_month" || id === "birthday_day_1" || id === "birthday_day_2") {
+
+                try {
+
+                    const userId = interaction.user.id;
+                    const value = parseInt(interaction.values[0]);
+
+                    const entry = temp[userId] || {};
+
+                    if (id === "birthday_month") {
+                        entry.month = value;
+                    } else {
+                        entry.day = value;
+                    }
+
+                    temp[userId] = entry;
+
+                    if (entry.month === undefined || entry.day === undefined) {
+                        return interaction.reply({
+                            content: `✅ Got it! Now pick your ${entry.month === undefined ? "month" : "day"} too.`,
+                            ephemeral: true
+                        });
+                    }
+
+                    let birthdays = {};
+                    try {
+                        birthdays = JSON.parse(fs.readFileSync(birthdayPath));
+                    } catch {}
+
+                    birthdays[userId] = { day: entry.day, month: entry.month };
+
+                    fs.writeFileSync(birthdayPath, JSON.stringify(birthdays, null, 2));
+
+                    delete temp[userId];
+
+                    return interaction.reply({
+                        content: `🎂 Birthday saved: **${entry.day}/${entry.month}**`,
+                        ephemeral: true
+                    });
+
+                } catch (err) {
+                    console.error("BIRTHDAY SELECT ERROR:", err);
+
+                    if (!interaction.replied) {
+                        return interaction.reply({
+                            content: "❌ Something went wrong.",
+                            ephemeral: true
+                        });
+                    }
+                }
             }
         }
 
