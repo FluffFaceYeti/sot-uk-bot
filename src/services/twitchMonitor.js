@@ -170,9 +170,26 @@ async function checkStream(client) {
 
         live = false;
 
+        const fs = require("fs");
+        const path = require("path");
+
+        const statusFile = path.join(__dirname, "../../userdata/status.json");
+
+        let statusText = "🏴‍☠️ Stealing your booty 🏴‍☠️";
+
+        try {
+            if (fs.existsSync(statusFile)) {
+                const saved = JSON.parse(fs.readFileSync(statusFile));
+                if (saved.text) statusText = saved.text;
+            }
+        } catch {}
+
         client.user.setPresence({
-            activities: [],
-            status: "idle"
+            activities: [{
+                name: statusText,
+                type: 0
+            }],
+            status: "online"
         });
     }
 }
