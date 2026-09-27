@@ -67,11 +67,17 @@ ${channelList}`
 
             const totalMinutes = Math.ceil(diff / 60000);
 
-            if (totalMinutes > 60) {
+            if (totalMinutes > 120) {
+                nextAlert = `2 Hours Remaining (in ${totalMinutes - 120} minutes)`;
+            }
+            else if (totalMinutes > 60) {
                 nextAlert = `1 Hour Remaining (in ${totalMinutes - 60} minutes)`;
             }
             else if (totalMinutes > 30) {
                 nextAlert = `30 Minutes Remaining (in ${totalMinutes - 30} minutes)`;
+            }
+            else if (totalMinutes > 10) {
+                nextAlert = `10 Minutes Remaining (in ${totalMinutes - 10} minutes)`;
             }
             else if (totalMinutes > 5) {
                 nextAlert = `5 Minutes Remaining (in ${totalMinutes - 5} minutes)`;

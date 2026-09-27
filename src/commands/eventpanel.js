@@ -38,13 +38,13 @@ module.exports = {
         // =====================
         const row2 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId("event_go")
-                .setLabel("GO")
-                .setStyle(ButtonStyle.Success),
+                .setCustomId("event_2hour")
+                .setLabel("2 Hour Alert")
+                .setStyle(ButtonStyle.Secondary),
 
             new ButtonBuilder()
-                .setCustomId("event_5")
-                .setLabel("5 Min")
+                .setCustomId("event_hour")
+                .setLabel("1 Hour Alert")
                 .setStyle(ButtonStyle.Secondary),
 
             new ButtonBuilder()
@@ -53,11 +53,22 @@ module.exports = {
                 .setStyle(ButtonStyle.Secondary),
 
             new ButtonBuilder()
-                .setCustomId("event_hour")
-                .setLabel("1 Hour Alert")
+                .setCustomId("event_10")
+                .setLabel("10 Min")
                 .setStyle(ButtonStyle.Secondary),
 
-            // ✅ NEW BUTTON
+            new ButtonBuilder()
+                .setCustomId("event_5")
+                .setLabel("5 Min")
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+        const row3 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId("event_go")
+                .setLabel("GO")
+                .setStyle(ButtonStyle.Success),
+
             new ButtonBuilder()
                 .setCustomId("event_time")
                 .setLabel("Time")
@@ -67,7 +78,7 @@ module.exports = {
         // =====================
         // ⚙️ INFO + SETUP
         // =====================
-        const row3 = new ActionRowBuilder().addComponents(
+        const row4 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("event_status")
                 .setLabel("Status")
@@ -81,7 +92,7 @@ module.exports = {
 
         message.channel.send({
             content: "🎮 **Event Control Panel**",
-            components: [row1, row2, row3]
+            components: [row1, row2, row3, row4]
         });
     }
 };

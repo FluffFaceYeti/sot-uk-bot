@@ -60,6 +60,13 @@ module.exports = {
         const goCmd = client.commands.get("go");
         if (goCmd) goCmd.execute(message, client, []);
 
+        // 2 HOURS remaining
+        if (minutes >= 120) {
+            timers.push(setTimeout(() => {
+                client.commands.get("2hour")?.execute(message, client, []);
+            }, (minutes - 120) * 60000));
+        }
+
         // 1 HOUR remaining
         if (minutes >= 60) {
             timers.push(setTimeout(() => {
@@ -72,6 +79,13 @@ module.exports = {
             timers.push(setTimeout(() => {
                 client.commands.get("30")?.execute(message, client, []);
             }, (minutes - 30) * 60000));
+        }
+
+        // 10 minutes remaining
+        if (minutes >= 10) {
+            timers.push(setTimeout(() => {
+                client.commands.get("10")?.execute(message, client, []);
+            }, (minutes - 10) * 60000));
         }
 
         // 5 minutes remaining

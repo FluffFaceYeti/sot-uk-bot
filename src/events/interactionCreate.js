@@ -112,6 +112,16 @@ module.exports = {
                     return reply("⏱️ 30 minute alert");
                 }
 
+                if (id === "event_10") {
+                    client.commands.get("10").execute(fakeMessage);
+                    return reply("⏱️ 10 minute alert");
+                }
+
+                if (id === "event_2hour") {
+                client.commands.get("2hour").execute(fakeMessage);
+                return reply("⏱️ 2 hour alert");
+                }
+
                 if (id === "event_hour") {
                 client.commands.get("hour").execute(fakeMessage);
                 return reply("⏱️ 1 hour alert");
