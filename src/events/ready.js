@@ -7,6 +7,9 @@ const { checkBirthdays } = require("../utils/birthdayCheck");
 // 🔴 Twitch system
 const { checkStream } = require("../services/twitchMonitor");
 
+// 🎮 Event system (resume after restart)
+const startevent = require("../commands/startevent");
+
 const statusFile = path.join(__dirname, "../../userdata/status.json");
 
 module.exports = {
@@ -48,5 +51,8 @@ module.exports = {
         setInterval(() => {
             checkBirthdays(client);
         }, 60 * 1000);
+
+        // 🎮 Resume an event that was still running when the bot last stopped
+        startevent.resume(client);
     }
 };

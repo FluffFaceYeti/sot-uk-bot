@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { timers } = require("./startevent");
+const { clearScheduledTimers } = require("./startevent");
 
 const statePath = path.join(__dirname, "../../userdata/eventState.json");
 
@@ -22,12 +22,13 @@ execute(message) {
         return message.reply("⚠️ No event is currently running.");
     }
 
-    timers.forEach(timer => clearTimeout(timer));
-    timers.length = 0;
+    clearScheduledTimers();
 
     state.running = false;
     state.mode = null;
     state.endTime = null;
+    state.guildId = null;
+    state.channelId = null;
 
     fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 

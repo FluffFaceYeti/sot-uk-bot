@@ -5,6 +5,66 @@ const statePath = path.join(__dirname, "../../userdata/eventState.json");
 
 let timers = [];
 
+function clearScheduledTimers() {
+    timers.forEach(timer => clearTimeout(timer));
+    timers.length = 0;
+}
+
+// Schedules the remaining alerts for an event that has `minutes` left on the clock.
+// Used both when an event is first started and when resuming one after a restart.
+function scheduleAlerts(fakeMessage, client, minutes, state) {
+
+    // 2 HOURS remaining
+    if (minutes >= 120) {
+        timers.push(setTimeout(() => {
+            client.commands.get("2hour")?.execute(fakeMessage, client, []);
+        }, (minutes - 120) * 60000));
+    }
+
+    // 1 HOUR remaining
+    if (minutes >= 60) {
+        timers.push(setTimeout(() => {
+            client.commands.get("hour")?.execute(fakeMessage, client, []);
+        }, (minutes - 60) * 60000));
+    }
+
+    // 30 minutes remaining
+    if (minutes >= 30) {
+        timers.push(setTimeout(() => {
+            client.commands.get("30")?.execute(fakeMessage, client, []);
+        }, (minutes - 30) * 60000));
+    }
+
+    // 10 minutes remaining
+    if (minutes >= 10) {
+        timers.push(setTimeout(() => {
+            client.commands.get("10")?.execute(fakeMessage, client, []);
+        }, (minutes - 10) * 60000));
+    }
+
+    // 5 minutes remaining
+    if (minutes >= 5) {
+        timers.push(setTimeout(() => {
+            client.commands.get("5")?.execute(fakeMessage, client, []);
+        }, (minutes - 5) * 60000));
+    }
+
+    // FINAL TIME
+    timers.push(setTimeout(() => {
+
+        client.commands.get("time")?.execute(fakeMessage, client, []);
+
+        state.running = false;
+        state.mode = null;
+        state.endTime = null;
+        state.guildId = null;
+        state.channelId = null;
+
+        fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+    }, minutes * 60000));
+}
+
 module.exports = {
     name: "startevent",
 
@@ -15,7 +75,9 @@ module.exports = {
         let state = {
             running: false,
             mode: null,
-            endTime: null
+            endTime: null,
+            guildId: null,
+            channelId: null
         };
 
         try {
@@ -33,6 +95,8 @@ module.exports = {
 
             state.running = true;
             state.mode = "manual";
+            state.guildId = message.guild.id;
+            state.channelId = message.channel.id;
 
             fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 
@@ -46,11 +110,11 @@ module.exports = {
             return message.reply("❌ Invalid time provided.");
         }
 
-        const ms = minutes * 60000;
-
         state.running = true;
         state.mode = "automatic";
-        state.endTime = Date.now() + ms;
+        state.endTime = Date.now() + minutes * 60000;
+        state.guildId = message.guild.id;
+        state.channelId = message.channel.id;
 
         fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 
@@ -60,54 +124,60 @@ module.exports = {
         const goCmd = client.commands.get("go");
         if (goCmd) goCmd.execute(message, client, []);
 
-        // 2 HOURS remaining
-        if (minutes >= 120) {
-            timers.push(setTimeout(() => {
-                client.commands.get("2hour")?.execute(message, client, []);
-            }, (minutes - 120) * 60000));
+        scheduleAlerts(message, client, minutes, state);
+    },
+
+    // Called once at bot startup to pick back up an automatic event that was
+    // still running when the process last stopped (crash, redeploy, restart).
+    resume(client) {
+
+        let state;
+
+        try {
+            state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+        } catch {
+            return;
         }
 
-        // 1 HOUR remaining
-        if (minutes >= 60) {
-            timers.push(setTimeout(() => {
-                client.commands.get("hour")?.execute(message, client, []);
-            }, (minutes - 60) * 60000));
+        if (!state.running || state.mode !== "automatic" || !state.endTime) {
+            return;
         }
 
-        // 30 minutes remaining
-        if (minutes >= 30) {
-            timers.push(setTimeout(() => {
-                client.commands.get("30")?.execute(message, client, []);
-            }, (minutes - 30) * 60000));
-        }
+        const minutesRemaining = Math.ceil((state.endTime - Date.now()) / 60000);
 
-        // 10 minutes remaining
-        if (minutes >= 10) {
-            timers.push(setTimeout(() => {
-                client.commands.get("10")?.execute(message, client, []);
-            }, (minutes - 10) * 60000));
-        }
-
-        // 5 minutes remaining
-        if (minutes >= 5) {
-            timers.push(setTimeout(() => {
-                client.commands.get("5")?.execute(message, client, []);
-            }, (minutes - 5) * 60000));
-        }
-
-        // FINAL TIME
-        timers.push(setTimeout(() => {
-
-            client.commands.get("time")?.execute(message, client, []);
-
+        const resetState = () => {
             state.running = false;
             state.mode = null;
             state.endTime = null;
-
+            state.guildId = null;
+            state.channelId = null;
             fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+        };
 
-        }, ms));
+        if (minutesRemaining <= 0) {
+            console.log("⚠️ Event ended while the bot was offline — resetting state.");
+            return resetState();
+        }
+
+        const guild = client.guilds.cache.get(state.guildId);
+        const channel = guild?.channels.cache.get(state.channelId);
+
+        if (!guild || !channel) {
+            console.log("⚠️ Could not resume event (guild/channel not found) — resetting state.");
+            return resetState();
+        }
+
+        const fakeMessage = {
+            guild,
+            channel,
+            reply: (msg) => channel.send(msg)
+        };
+
+        console.log(`🔁 Resuming event: ${minutesRemaining} minute(s) remaining.`);
+
+        scheduleAlerts(fakeMessage, client, minutesRemaining, state);
     }
 };
 
 module.exports.timers = timers;
+module.exports.clearScheduledTimers = clearScheduledTimers;
