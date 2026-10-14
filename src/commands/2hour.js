@@ -4,6 +4,6 @@ module.exports = {
   name: "2hour",
 
   async execute(message) {
-    await playEventAudio(message, "2hour.wav");
+    await playEventAudio(message, "120mins.mp3");
   }
 };
