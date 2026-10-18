@@ -5,7 +5,8 @@ const {
     ActionRowBuilder,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    MessageFlags
 } = require("discord.js");
 
 // ✅ BASE PATH
@@ -42,7 +43,7 @@ module.exports = {
             if (!interaction.member.permissions.has("Administrator")) {
                 return interaction.reply({
                     content: "❌ Admins only.",
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }
@@ -64,7 +65,7 @@ module.exports = {
             };
 
             const reply = (msg) =>
-                interaction.reply({ content: msg, ephemeral: true });
+                interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
 
             try {
 
@@ -154,7 +155,7 @@ module.exports = {
                     return interaction.reply({
                         content: "Select event voice channels:",
                         components: [new ActionRowBuilder().addComponents(menu)],
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -168,7 +169,7 @@ module.exports = {
                     return interaction.reply({
                         content: "Select Twitch channel:",
                         components: [new ActionRowBuilder().addComponents(menu)],
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -216,7 +217,7 @@ module.exports = {
                 if (!interaction.replied) {
                     return interaction.reply({
                         content: "❌ Something went wrong.",
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
             }
@@ -235,7 +236,7 @@ module.exports = {
                 if (!interaction.values || interaction.values.length === 0) {
                     return interaction.reply({
                         content: "❌ No channels selected. Previous config kept.",
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -253,7 +254,7 @@ module.exports = {
 
                 return interaction.reply({
                     content: `✅ Saved ${interaction.values.length} event channel(s)!`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -271,7 +272,7 @@ module.exports = {
 
                 return interaction.reply({
                     content: "📡 Twitch channel saved!",
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -289,7 +290,7 @@ module.exports = {
 
                 return interaction.reply({
                     content: "🎂 Birthday channel saved!",
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }
@@ -321,7 +322,7 @@ module.exports = {
                     if (entry.month === undefined || entry.day === undefined) {
                         return interaction.reply({
                             content: `✅ Got it! Now pick your ${entry.month === undefined ? "month" : "day"} too.`,
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -338,7 +339,7 @@ module.exports = {
 
                     return interaction.reply({
                         content: `🎂 Birthday saved: **${entry.day}/${entry.month}**`,
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
 
                 } catch (err) {
@@ -347,7 +348,7 @@ module.exports = {
                     if (!interaction.replied) {
                         return interaction.reply({
                             content: "❌ Something went wrong.",
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral
                         });
                     }
                 }
@@ -370,7 +371,7 @@ module.exports = {
                     if (isNaN(hours) || hours <= 0) {
                         return interaction.reply({
                             content: "❌ Enter a valid number.",
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral
                         });
                     }
 
@@ -392,7 +393,7 @@ module.exports = {
 
                     return interaction.reply({
                         content: `⏳ Auto event started for ${hours} hour(s)`,
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -411,7 +412,7 @@ module.exports = {
 
                     return interaction.reply({
                         content: `✅ Prefix updated to \`${newPrefix}\``,
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
 
@@ -421,7 +422,7 @@ module.exports = {
                 if (!interaction.replied) {
                     return interaction.reply({
                         content: "❌ Something went wrong.",
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
                 }
             }
