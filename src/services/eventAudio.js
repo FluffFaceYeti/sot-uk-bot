@@ -17,6 +17,14 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Deletes a message after `ms` without blocking whatever called this -
+// keeps the channel tidy during long events without delaying playback.
+function deleteAfter(msg, ms) {
+  setTimeout(() => {
+    msg.delete().catch(err => console.error("❌ Failed to delete message:", err));
+  }, ms);
+}
+
 async function playEventAudio(message, audioFile) {
 
   let data = {};
@@ -45,13 +53,9 @@ async function playEventAudio(message, audioFile) {
     `🔔 Playing event alert: **${audioFile}**`
   );
 
-  await sleep(1000);
+  deleteAfter(startMessage, 5000);
 
-  try {
-    await startMessage.delete();
-  } catch (err) {
-    console.error("❌ Failed to delete start message:", err);
-  }
+  await sleep(1000);
 
   // 🔥 SEQUENTIAL PLAYBACK (VERY STABLE)
   for (const channelId of channels) {
@@ -116,14 +120,7 @@ async function playEventAudio(message, audioFile) {
 
   const endMessage = await message.channel.send("🔔 Alert finished!");
 
-  await sleep(2000);
-
-  try {
-    await startMessage.delete();
-    await endMessage.delete();
-  } catch (err) {
-    console.error("❌ Failed to delete messages:", err);
-  }
+  deleteAfter(endMessage, 5000);
 }
 
 module.exports = { playEventAudio };
