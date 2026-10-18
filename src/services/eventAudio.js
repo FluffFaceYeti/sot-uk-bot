@@ -73,6 +73,16 @@ async function playEventAudio(message, audioFile) {
         selfDeaf: false
       });
 
+      // Start the transcode (slow, CPU-bound) at the same time as the voice
+      // handshake (slow, network-bound) instead of waiting for one then the
+      // other - cuts the join-to-playback gap roughly in half.
+      const player = createAudioPlayer();
+
+      const resource = createAudioResource(
+        fs.createReadStream(audioPath),
+        { inputType: StreamType.Arbitrary }
+      );
+
       try {
         await entersState(connection, VoiceConnectionStatus.Ready, 20000);
       } catch (err) {
@@ -80,13 +90,6 @@ async function playEventAudio(message, audioFile) {
         connection.destroy();
         continue;
       }
-
-      const player = createAudioPlayer();
-
-      const resource = createAudioResource(
-        fs.createReadStream(audioPath),
-        { inputType: StreamType.Arbitrary }
-      );
 
       connection.subscribe(player);
       player.play(resource);
