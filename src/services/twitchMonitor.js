@@ -22,6 +22,8 @@ async function getToken() {
 
 async function checkStream(client) {
 
+  try {
+
     if (!accessToken) {
         await getToken();
     }
@@ -192,6 +194,12 @@ async function checkStream(client) {
             status: "online"
         });
     }
+
+  } catch (err) {
+    console.error("❌ Twitch check failed:", err);
+    // Force a fresh token next time in case it was an auth issue.
+    accessToken = null;
+  }
 }
 
 module.exports = {
