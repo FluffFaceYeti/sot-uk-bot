@@ -74,9 +74,11 @@ async function playEventAudio(message, audioFile) {
       continue;
     }
 
+    let connection;
+
     try {
 
-      const connection = joinVoiceChannel({
+      connection = joinVoiceChannel({
         channelId: channel.id,
         guildId: message.guild.id,
         adapterCreator: message.guild.voiceAdapterCreator,
@@ -115,6 +117,7 @@ async function playEventAudio(message, audioFile) {
 
     } catch (err) {
       console.error(`❌ Voice error in ${channel?.name}:`, err);
+      connection?.destroy();
     }
   }
 
