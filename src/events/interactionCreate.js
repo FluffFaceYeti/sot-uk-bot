@@ -44,7 +44,7 @@ module.exports = {
                 return interaction.reply({
                     content: "❌ Admins only.",
                     flags: MessageFlags.Ephemeral
-                });
+                }).catch(err => console.error("ADMIN LOCK REPLY ERROR:", err));
             }
         }
 
@@ -95,6 +95,12 @@ module.exports = {
 
                 if (id === "event_stop") {
                     client.commands.get("stopevent").execute(fakeMessage);
+
+                    const panelMessage = interaction.message;
+                    setTimeout(() => {
+                        panelMessage.delete().catch(err => console.error("❌ Failed to delete event panel:", err));
+                    }, 5000);
+
                     return reply("🛑 Event stopped");
                 }
 
@@ -218,7 +224,7 @@ module.exports = {
                     return interaction.reply({
                         content: "❌ Something went wrong.",
                         flags: MessageFlags.Ephemeral
-                    });
+                    }).catch(() => {});
                 }
             }
         }
@@ -227,6 +233,8 @@ module.exports = {
         // 📂 CHANNEL SELECT
         // =========================
         if (interaction.isChannelSelectMenu()) {
+
+          try {
 
             // 🎮 EVENT CHANNELS (FIXED)
             if (interaction.customId === "event_channel_select") {
@@ -293,6 +301,17 @@ module.exports = {
                     flags: MessageFlags.Ephemeral
                 });
             }
+
+          } catch (err) {
+            console.error("CHANNEL SELECT ERROR:", err);
+
+            if (!interaction.replied) {
+                return interaction.reply({
+                    content: "❌ Something went wrong.",
+                    flags: MessageFlags.Ephemeral
+                }).catch(() => {});
+            }
+          }
         }
 
         // =========================
@@ -349,7 +368,7 @@ module.exports = {
                         return interaction.reply({
                             content: "❌ Something went wrong.",
                             flags: MessageFlags.Ephemeral
-                        });
+                        }).catch(() => {});
                     }
                 }
             }
@@ -423,7 +442,7 @@ module.exports = {
                     return interaction.reply({
                         content: "❌ Something went wrong.",
                         flags: MessageFlags.Ephemeral
-                    });
+                    }).catch(() => {});
                 }
             }
         }
