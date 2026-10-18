@@ -47,6 +47,12 @@ async function playEventAudio(message, audioFile) {
 
   await sleep(1000);
 
+  try {
+    await startMessage.delete();
+  } catch (err) {
+    console.error("❌ Failed to delete start message:", err);
+  }
+
   // 🔥 SEQUENTIAL PLAYBACK (VERY STABLE)
   for (const channelId of channels) {
 
